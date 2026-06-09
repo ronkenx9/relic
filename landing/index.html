@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RELIC — Every wallet has a story</title>
+<meta name="description" content="An AI archaeologist reads your wallet's history and writes its life story. Minted as an evolving relic on Mantle." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0F0F11; --surface:#1A1A1E; --border:#2A2A2F;
+    --t1:#EEEEEF; --t2:#A0A0AB; --t3:#6C6C74;
+    --accent:#E0B15E;        /* excavation gold — precious, used sparingly */
+    --ember:#C8502E;         /* the emotional accent — twice on this page */
+    --serif: "Syne", sans-serif;
+    --body: "Space Grotesk", sans-serif;
+    --mono: "JetBrains Mono", monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--t2);font-family:var(--body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:var(--accent);color:#0F0F11}
+
+  /* grain */
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.05;z-index:50;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");}
+
+  .wrap{max-width:72rem;margin:0 auto;padding:0 1.5rem}
+  section{padding:7rem 0;border-top:1px solid var(--border)}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--t3);margin-bottom:1.5rem}
+  h1,h2,h3{font-family:var(--serif);color:var(--t1);letter-spacing:-.02em;line-height:1.05}
+  h2{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;margin-bottom:1.4rem}
+  .lede{font-size:1.15rem;max-width:38rem}
+
+  /* nav */
+  nav{position:fixed;top:0;left:0;right:0;z-index:40;backdrop-filter:blur(12px);background:rgba(15,15,17,.72);border-bottom:1px solid var(--border)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{font-family:var(--serif);font-weight:800;font-size:1.05rem;color:var(--t1);text-decoration:none;letter-spacing:.04em}
+  .logo span{color:var(--accent)}
+  nav ul{display:flex;gap:2.2rem;list-style:none}
+  nav ul a{font-family:var(--mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);text-decoration:none;transition:color .25s}
+  nav ul a:hover{color:var(--t1)}
+  .btn{display:inline-block;font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;padding:.85rem 1.6rem;border:1px solid var(--t1);color:var(--t1);background:transparent;text-decoration:none;cursor:pointer;transition:transform .2s ease,background .25s,color .25s,border-color .25s}
+  .btn:hover{transform:scale(.95);background:var(--accent);border-color:var(--accent);color:#0F0F11}
+  .btn:active{transform:scale(.90)}
+  .btn-solid{background:var(--t1);color:#0F0F11}
+  .btn-solid:hover{background:var(--accent)}
+  nav .btn{padding:.55rem 1.1rem;font-size:.68rem}
+
+  /* hero */
+  header{padding:11rem 0 7rem;position:relative}
+  h1{font-size:clamp(2.8rem,7vw,5.4rem);font-weight:800;max-width:18ch}
+  h1 .stroke{-webkit-text-stroke:2px var(--t1);color:transparent}
+  h1 .gold{color:var(--accent)}
+  header .lede{margin:2rem 0 3rem}
+  .dig{display:flex;max-width:34rem;border:1px solid var(--border);background:var(--surface)}
+  .dig input{flex:1;background:transparent;border:0;outline:0;color:var(--t1);font-family:var(--mono);font-size:.85rem;padding:1.1rem 1.2rem}
+  .dig input::placeholder{color:var(--t3)}
+  .dig .btn{border:0;border-left:1px solid var(--border)}
+  .hero-meta{margin-top:1.1rem;font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+  .hero-meta b{color:var(--t2);font-weight:500}
+
+  /* specimen card */
+  .specimen{margin-top:5.5rem;border:1px solid var(--border);background:var(--surface);max-width:46rem;position:relative}
+  .specimen::before{content:"";position:absolute;inset:10px;border:1px solid var(--border);pointer-events:none}
+  .spec-head{display:flex;justify-content:space-between;align-items:center;padding:1.4rem 2rem;border-bottom:1px solid var(--border)}
+  .spec-head .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+  .spec-head .addr{font-family:var(--mono);font-size:.72rem;color:var(--t3)}
+  .era{padding:1.6rem 2rem;border-bottom:1px solid var(--border)}
+  .era:last-of-type{border-bottom:0}
+  .era h3{font-size:.95rem;font-weight:700;margin-bottom:.55rem;letter-spacing:.02em}
+  .era h3 .num{font-family:var(--mono);font-size:.65rem;color:var(--t3);letter-spacing:.2em;margin-right:.8rem;font-weight:400}
+  .era p{font-size:.95rem;color:var(--t2)}
+  .era p em{color:var(--t1);font-style:normal}
+  .epitaph{padding:1.5rem 2rem;background:rgba(224,177,94,.05)}
+  .epitaph p{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;color:var(--accent)}
+  .epitaph .ev{display:block;margin-top:.5rem;color:var(--t3);font-size:.68rem;letter-spacing:.14em}
+
+  /* moments catalog */
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
+  .cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem 1.6rem;transition:background .3s}
+  .cell:hover{background:var(--surface)}
+  .cell .idx{font-family:var(--mono);font-size:.65rem;letter-spacing:.2em;color:var(--t3);display:block;margin-bottom:2.6rem}
+  .cell h3{font-size:1.02rem;font-weight:700;margin-bottom:.5rem}
+  .cell p{font-size:.85rem;color:var(--t3);line-height:1.55}
+  .cell.ember h3{color:var(--ember)}
+
+  /* method */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border)}
+  .step{padding:2.6rem 2.2rem;border-right:1px solid var(--border)}
+  .step:last-child{border-right:0}
+  .step .idx{font-family:var(--serif);font-weight:800;font-size:2.6rem;color:transparent;-webkit-text-stroke:1.5px var(--t3);display:block;margin-bottom:1.6rem}
+  .step h3{font-size:1.1rem;margin-bottom:.7rem}
+  .step p{font-size:.9rem;color:var(--t3)}
+  .step p code{font-family:var(--mono);font-size:.78rem;color:var(--t2)}
+
+  /* evidence strip */
+  .strip{display:flex;gap:0;border:1px solid var(--border);background:var(--surface);font-family:var(--mono)}
+  .strip>div{flex:1;padding:1.6rem;border-right:1px solid var(--border)}
+  .strip>div:last-child{border-right:0}
+  .strip .k{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:.5rem}
+  .strip .v{font-size:.95rem;color:var(--t1)}
+  .strip .v.gold{color:var(--accent)}
+
+  /* split */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+
+  /* footer cta */
+  .final{padding:9rem 0;text-align:left}
+  .final h2{font-size:clamp(2.4rem,5.5vw,4rem);max-width:20ch}
+  .final h2 .ember-w{color:var(--ember)}
+  footer{border-top:1px solid var(--border);padding:2.2rem 0}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center}
+  footer p{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--t3)}
+  footer a{color:var(--t3);text-decoration:none;transition:color .25s}
+  footer a:hover{color:var(--accent)}
+
+  /* reveal on scroll */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  @media(max-width:860px){
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .steps{grid-template-columns:1fr}
+    .step{border-right:0;border-bottom:1px solid var(--border)}
+    .step:last-child{border-bottom:0}
+    .split{grid-template-columns:1fr;gap:3rem}
+    .strip{flex-direction:column}
+    .strip>div{border-right:0;border-bottom:1px solid var(--border)}
+    .strip>div:last-child{border-bottom:0}
+    nav ul{display:none}
+    section{padding:5rem 0}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#">RELIC<span>.</span></a>
+    <ul>
+      <li><a href="#specimen">Specimen</a></li>
+      <li><a href="#moments">Moments</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#evidence">Evidence</a></li>
+    </ul>
+    <a class="btn" href="#dig">Excavate</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">An AI archaeologist · on Mantle</p>
+    <h1>Every wallet has a <span class="stroke">story</span>.<br/>Yours is already <span class="gold">written</span>.</h1>
+    <p class="lede">RELIC reads your wallet's entire on-chain history — the first mint, the bear you survived, the trade you don't talk about — and writes its life story. Illustrated, verifiable, minted as a relic that evolves with you.</p>
+    <div class="dig" id="dig">
+      <input id="addr" type="text" spellcheck="false" autocomplete="off" placeholder="paste any address or ENS — yours, a whale's, vitalik.eth" />
+      <button class="btn btn-solid" onclick="excavate()">Dig</button>
+    </div>
+    <p class="hero-meta">No wallet connect. No gas. No signature. <b>Read-only until you choose to mint.</b></p>
+  </div>
+</header>
+
+<section id="specimen">
+  <div class="wrap">
+    <p class="eyebrow">Field report no. 0041</p>
+    <h2>What the chain remembers.</h2>
+    <p class="lede">Every line below is backed by transaction evidence. The archaeologist narrates; it never invents.</p>
+
+    <div class="specimen reveal" id="card">
+      <div class="spec-head">
+        <span class="tag">Specimen · Class of 2021</span>
+        <span class="addr">0x7a3f…e9c4 · 412 txs · 3 chains</span>
+      </div>
+      <div class="era">
+        <h3><span class="num">ERA I</span>Origins</h3>
+        <p>On <em>14 March 2021</em> you paid <em>0.041 ETH</em> in gas to mint a picture of a rock. It was your first transaction ever. You overpaid by roughly 60%. Everyone did, then — that was the tuition.</p>
+      </div>
+      <div class="era">
+        <h3><span class="num">ERA II</span>The Crucible</h3>
+        <p>Between <em>May and July 2022</em> your portfolio fell <em>73%</em> and you did not sell a single position. The chain records patience. It does not record whether it was conviction or a forgotten password — and it is kinder for not asking.</p>
+      </div>
+      <div class="era">
+        <h3><span class="num">ERA III</span>Now</h3>
+        <p>You hold <em>9 assets</em>, three of them dead and kept like pressed flowers. Lifetime gas: <em>1.7 ETH</em> — rent, paid in full, to a city you helped build.</p>
+      </div>
+      <div class="epitaph">
+        <p>VERDICT — SURVIVOR. FIRST IN, NEVER OUT.</p>
+        <span class="ev">EVIDENCE: 412 TX HASHES · STORY HASH ANCHORED ON MANTLE · BLOCK 12,409,113</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="moments">
+  <div class="wrap">
+    <p class="eyebrow">The catalog</p>
+    <h2>Eight artifacts, excavated from every wallet.</h2>
+    <p class="lede" style="margin-bottom:3.5rem">The dig is deterministic — moments are computed from transaction evidence, never imagined. The telling is where the craft lives.</p>
+    <div class="grid">
+      <div class="cell reveal"><span class="idx">01</span><h3>Genesis</h3><p>Your first transaction. Where every story has to start.</p></div>
+      <div class="cell reveal"><span class="idx">02</span><h3>First Artifact</h3><p>The first NFT or the first DeFi touch — whichever pulled you under.</p></div>
+      <div class="cell reveal"><span class="idx">03</span><h3>The Bear Survival</h3><p>Held through a 40%+ drawdown without selling. The chain noticed.</p></div>
+      <div class="cell reveal ember"><span class="idx">04</span><h3>The Cursed Trade</h3><p>Your worst round-trip. We promise to be gentle. We promise nothing.</p></div>
+      <div class="cell reveal"><span class="idx">05</span><h3>The One That Got Away</h3><p>Sold, then watched it 5x. Documented for posterity.</p></div>
+      <div class="cell reveal"><span class="idx">06</span><h3>Diamond Era</h3><p>Your longest hold. Measured in blocks, felt in years.</p></div>
+      <div class="cell reveal"><span class="idx">07</span><h3>Gas Burned</h3><p>Lifetime fees, totalled. Rent paid to the city.</p></div>
+      <div class="cell reveal"><span class="idx">08</span><h3>The Quiet Year</h3><p>Your longest silence. Even absence leaves a record.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="wrap">
+    <p class="eyebrow">Method</p>
+    <h2>Dig. Narrate. Mint.</h2>
+    <div class="steps" style="margin-top:3.5rem">
+      <div class="step reveal">
+        <span class="idx">01</span>
+        <h3>The excavation</h3>
+        <p>Paste any address. The indexer walks its full history across Mantle and Ethereum and computes the moments — each one carrying its <code>tx-hash</code> evidence.</p>
+      </div>
+      <div class="step reveal">
+        <span class="idx">02</span>
+        <h3>The telling</h3>
+        <p>An archaeologist with taste writes three short eras and an epitaph. Every number in the prose is checked against the evidence before you ever see it.</p>
+      </div>
+      <div class="step reveal">
+        <span class="idx">03</span>
+        <h3>The relic</h3>
+        <p>Mint gasless on Mantle. The story hash lives on-chain; the relic re-renders as your history grows. Your wallet keeps writing. So does the story.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="evidence">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="eyebrow">Proof, not vibes</p>
+        <h2>A story you can verify on-chain.</h2>
+        <p class="lede">Spotify Wrapped tells you about yourself and asks you to trust it. RELIC anchors every story's hash — and its evidence — on Mantle. Anyone can check that your legend is, in fact, history.</p>
+      </div>
+      <div class="strip reveal">
+        <div><span class="k">Network</span><span class="v">Mantle</span></div>
+        <div><span class="k">Mint cost</span><span class="v gold">0.00</span></div>
+        <div><span class="k">Story hash</span><span class="v">on-chain</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <p class="eyebrow">The dig is open</p>
+    <h2>You were here. <span class="ember-w">Prove it</span> beautifully.</h2>
+    <p class="lede" style="margin:1.8rem 0 2.6rem">Or start with someone else's wallet. We won't tell. The chain already did.</p>
+    <a class="btn btn-solid" href="#dig">Excavate a wallet</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>RELIC — built on Mantle · MMXXVI</p>
+    <p><a href="#">X</a> &nbsp;·&nbsp; <a href="#">GitHub</a> &nbsp;·&nbsp; <a href="#">Explorer</a></p>
+  </div>
+</footer>
+
+<script>
+  // reveal on scroll
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // hero input: scroll to the specimen as a taste of the product
+  function excavate() {
+    const v = document.getElementById('addr').value.trim();
+    const card = document.getElementById('card');
+    card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
+    if (v) document.querySelector('#specimen .addr').textContent =
+      (v.length > 14 ? v.slice(0,6) + '…' + v.slice(-4) : v) + ' · excavating…';
+    document.getElementById('specimen').scrollIntoView({ behavior: 'smooth' });
+  }
+  document.getElementById('addr').addEventListener('keydown', e => { if (e.key === 'Enter') excavate(); });
+</script>
+</body>
+</html>
