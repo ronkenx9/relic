@@ -15,21 +15,22 @@
       text+emblem+palette fallback ships first.
 
 ## Phase 1 — Indexer + moment extractor
-- [ ] Scaffold (meridian pattern: TS strict, viem, vitest, zod). chains.ts 5000+5003+1.
+- [x] Scaffold (meridian pattern: TS strict, viem, vitest, zod). chains.ts 5000+5003+1.
       GATE: build green.
-- [ ] History indexer: txs + token/NFT transfers, Mantle (5000) first, Ethereum mainnet second,
+- [x] History indexer: (gate met via browser forge + scripts/snapshot-demos.ts — Routescan, keyless, CORS-open; explorer.mantle.xyz was down 2026-06-11)
+      Original text: txs + token/NFT transfers, Mantle (5000) first, Ethereum mainnet second,
       merged timeline, disk cache per address.
       GATE: `npm run dev -- index <wallet>` warm <30s, sane timeline JSON.
-- [ ] Moment extractor per PRD §3 — pure functions, every moment carries evidence txHashes.
+- [x] Moment extractor — 10 types (price-gated cursed_trade/got_away replaced by honest price-free full_exit/faceplant per R2) — pure functions, every moment carries evidence txHashes.
       GATE: fixture tests for all 8 moment types + determinism test.
 - [ ] Calibration pull: 10 wallets → data/calibration/.
       GATE: each yields ≥2 moments or triggers THE UNWRITTEN path.
 
 ## Phase 2 — Archetype engine (the fusion core)
-- [ ] Trait vector (deterministic, from moments+timeline) → 6 variants + THE UNWRITTEN.
+- [x] Trait vector (deterministic, from moments+timeline) → 6 variants + THE UNWRITTEN.
       archetypes.json = published mapping (versioned; hash anchored at contract deploy).
       GATE: unit tests — synthetic timelines hit each archetype; tie-break deterministic.
-- [ ] Evidence lines: every assignment prints WHY with concrete numbers + tx evidence.
+- [x] Evidence lines: every assignment prints WHY with concrete numbers + tx evidence.
       GATE: no archetype without ≥1 evidence line (tested).
 
 ## Phase 3 — Character sheet + writing
@@ -51,13 +52,13 @@
 - [ ] Mint one real sheet (sheetHash on-chain) as the deployment-award proof tx.
 
 ## Phase 5 — Frontend (the consumer surface)
-- [ ] Forge page: paste address → moments → archetype → character sheet. Sheet BEFORE any
+- [x] Forge page (as THE RUN gate — owner re-ordered: game-first): paste address → moments → archetype → character sheet. Sheet BEFORE any
       wallet-connect. Loading themed ("forging…"). Text+emblem+palette art with PNG slots
       that light up when owner art lands in frontend/assets/.
       GATE: full flow on a phone viewport, no wallet needed.
 - [ ] Share card: downloadable sheet PNG (1200×675) via canvas.
       GATE: squint test at thumbnail size.
-- [ ] Static public deploy (GitHub Pages) with pre-forged demo wallets (R6 snapshot rule).
+- [x] Static public deploy (GitHub Pages) → https://ronkenx9.github.io/relic/ with pre-forged demo wallets (R6 snapshot rule).
       GATE: public URL loads on a phone.
 
 ## Phase 6 — Submission hardening (protected)
@@ -68,7 +69,9 @@
 - [ ] OWNER: demo video, X post #MantleAIHackathon, DoraHacks BUIDL.
 
 ## Phase 7 — THE RUN (game; gated per PRD §7 — only after P0–P6 demoable)
-- [ ] 60–90s canvas run seeded by wallet. Cut first if time dies.
+- [x] THE RUN shipped FIRST by owner decision — three.js voxel troll-platformer, deterministic
+      from wallet (Level Devil trap grammar mapped to real moments), live-verified vs vitalik
+      + 2 active Mantle wallets, mobile gate checked, demo snapshots committed (R6).
 
 ## Cut order (behind schedule → top down)
 THE RUN → share-card PNG → Ethereum-mainnet merge (Mantle-only forge still demos) → gasless

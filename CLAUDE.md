@@ -14,5 +14,10 @@ The writing is the product; treat narrative gates as blocking.
 - Consumer track Part B criteria: NOT yet fetched (Phase 0 task — spreadsheet in DoraHacks brief)
 - Anti-slop spec: PRD §4 + ~/brain/skills/creative-writing.md
 
-## Deployed addresses
-(record here — contract, frontend URL, art-direction decision)
+## Deployed addresses / live state (2026-06-11)
+- Game (THE RUN): https://ronkenx9.github.io/relic/ — voxel troll-platformer, fully client-side
+  forge (Routescan keyless API; explorer.mantle.xyz was DOWN — do not switch back without checking)
+- Repo: https://github.com/ronkenx9/relic · Demo snapshots: frontend/demo/*.json (R6)
+- Art direction: voxel chainscape + procedural palette fighters (owner: voxel ≈ minecraft-energy,
+  NO Minecraft branding/IP). Kaizenverse PNGs still pending from owner (sheet phase).
+- Contract (Relic.sol) NOT deployed yet — next phase with character sheet + mint.
