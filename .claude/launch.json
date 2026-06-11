@@ -2,10 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "relic-landing",
+      "name": "relic-game",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "landing"],
-      "port": 4173
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4500",
+        "--directory",
+        "frontend"
+      ],
+      "port": 4500
     }
   ]
 }

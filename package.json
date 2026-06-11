@@ -11,18 +11,22 @@
     "forge:wallet": "tsx src/cli.ts forge",
     "calibrate": "tsx src/cli.ts calibrate",
     "build:site": "tsx scripts/build-site.ts",
-    "contract:test": "forge test"
+    "contract:test": "forge test",
+    "build:web": "esbuild src/game/main.ts --bundle --format=esm --external:three --outfile=frontend/game.js --minify"
   },
   "author": "roninxx",
   "license": "MIT",
   "dependencies": {
+    "@types/three": "^0.184.1",
+    "three": "^0.184.0",
     "viem": "^2.21.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
-    "vitest": "^3.2.6",
-    "@types/node": "^22.0.0"
+    "vitest": "^3.2.6"
   }
 }

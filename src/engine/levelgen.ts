@@ -49,6 +49,8 @@ export interface LevelSpec {
   totalLength: number;
   /** Display strings for the end card. */
   momentsUsed: { type: MomentType; headline: string }[];
+  /** "+" when the explorer page cap was hit — counts are lower bounds (R2 honesty). */
+  truncatedHint?: string;
 }
 
 const SEG_LEN = { intro: 18, moment: 26, filler: 16, finale: 14 } as const;
@@ -158,11 +160,28 @@ export function generateLevel(tl: Timeline, moments: Moment[]): LevelSpec {
     x += len;
   }
 
+  // Gas toll gates — your real lifetime gas, collected one gate at a time
+  const gas = byType.get("gas_burned");
+  if (gas && segments.length > 2) {
+    const candidates = segments.slice(1, -1).filter((s) => s.biome !== "quiet" && s.biome !== "darkwinter");
+    if (candidates.length) {
+      const seg = candidates[rng.int(0, candidates.length - 1)]!;
+      seg.traps.push({
+        kind: "toll_gate",
+        atX: seg.startX + Math.floor((seg.endX - seg.startX) * 0.7),
+        width: 1,
+        label: gas.headline,
+        date: gas.date,
+      });
+    }
+  }
+
   return {
     seed,
     address: tl.address,
     segments,
     totalLength: x,
     momentsUsed: moments.map((m) => ({ type: m.type, headline: m.headline })),
+    ...(tl.truncated ? { truncatedHint: "+" } : {}),
   };
 }
