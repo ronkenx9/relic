@@ -1,0 +1,28 @@
+{
+  "name": "relic",
+  "version": "0.1.0",
+  "description": "RELIC × KAIZENVERSE — your wallet awakens as a Kaizenverse fighter. Deterministic character forge + evolving NFT on Mantle.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "forge:wallet": "tsx src/cli.ts forge",
+    "calibrate": "tsx src/cli.ts calibrate",
+    "build:site": "tsx scripts/build-site.ts",
+    "contract:test": "forge test"
+  },
+  "author": "roninxx",
+  "license": "MIT",
+  "dependencies": {
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.6",
+    "@types/node": "^22.0.0"
+  }
+}
