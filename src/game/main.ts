@@ -171,6 +171,12 @@ function startRun(level: LevelSpec, assignment: Assignment) {
     get state() {
       return run?.runner.state();
     },
+    runnerMode() {
+      return run?.runner.player.userData.mode;
+    },
+    runnerChildren() {
+      return run?.runner.player.children.map((child) => ({ name: child.name, mode: child.userData.mode }));
+    },
     warp(x: number) {
       run?.runner.warp(x);
     },

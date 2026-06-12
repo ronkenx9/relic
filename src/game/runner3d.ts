@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { Assignment } from "../engine/archetype.js";
 import type { LevelSpec, Segment, TrapEvent } from "../engine/levelgen.js";
 import { BIOME_COLORS } from "./world.js";
@@ -124,6 +125,16 @@ interface AvatarParts {
   pendant: THREE.Object3D;
 }
 
+const MODEL_BY_ARCHETYPE: Record<string, string> = {
+  wanderer: "assets/kaizen/models/01_kaisei_wanderer.glb",
+  trickster: "assets/kaizen/models/02_kaede_striker.glb",
+  duelist: "assets/kaizen/models/03_senka_assassin.glb",
+  oracle: "assets/kaizen/models/04_hayami_cutting_wind.glb",
+  baron: "assets/kaizen/models/05_cinder_vice.glb",
+  machine: "assets/kaizen/models/06_redline_visor.glb",
+  unwritten: "assets/kaizen/models/01_kaisei_wanderer.glb",
+};
+
 const AVATAR_PALETTES: Record<string, AvatarPalette> = {
   wanderer: { jacket: "#E07090", sleeve: "#BFC2C7", shirt: "#171719", pants: "#17191E", skin: "#C98C62", hair: "#191514", accent: "#D73338", glow: "#FF5CA8", metal: "#D8D4CB" },
   trickster: { jacket: "#B34CFF", sleeve: "#27213D", shirt: "#11111B", pants: "#1B1728", skin: "#C98C62", hair: "#17131D", accent: "#F010F0", glow: "#F010F0", metal: "#E6D8FF" },
@@ -133,6 +144,101 @@ const AVATAR_PALETTES: Record<string, AvatarPalette> = {
   machine: { jacket: "#4A5058", sleeve: "#C8CDD2", shirt: "#151619", pants: "#181A1E", skin: "#B8A18B", hair: "#111214", accent: "#FF3B30", glow: "#FF3B30", metal: "#E8EBEE" },
   unwritten: { jacket: "#3C3D42", sleeve: "#BFBFC4", shirt: "#101113", pants: "#17181B", skin: "#B89978", hair: "#101113", accent: "#FFFFFF", glow: "#FFFFFF", metal: "#D0D0D4" },
 };
+
+const gltfLoader = new GLTFLoader();
+
+function findModelPart(root: THREE.Object3D, pattern: RegExp): THREE.Object3D | undefined {
+  let found: THREE.Object3D | undefined;
+  root.traverse((child) => {
+    if (!found && pattern.test(child.name)) found = child;
+  });
+  return found;
+}
+
+function collectModelParts(root: THREE.Object3D, pattern: RegExp): THREE.Object3D[] {
+  const parts: THREE.Object3D[] = [];
+  root.traverse((child) => {
+    if (pattern.test(child.name)) parts.push(child);
+  });
+  return parts;
+}
+
+function makePartCluster(parts: THREE.Object3D[]): THREE.Group {
+  const cluster = new THREE.Group();
+  cluster.userData.childrenToAnimate = parts;
+  return cluster;
+}
+
+function applyClusterRotation(cluster: THREE.Object3D | undefined, x: number, z = 0): void {
+  if (!cluster) return;
+  const children = cluster.userData.childrenToAnimate as THREE.Object3D[] | undefined;
+  if (children) {
+    for (const child of children) {
+      child.rotation.x = x;
+      child.rotation.z = z;
+    }
+    return;
+  }
+  cluster.rotation.x = x;
+  cluster.rotation.z = z;
+}
+
+async function loadKaizenAvatarModel(assignment: Assignment): Promise<THREE.Group> {
+  const url = MODEL_BY_ARCHETYPE[assignment.archetype.id] ?? MODEL_BY_ARCHETYPE.wanderer;
+  const gltf = await gltfLoader.loadAsync(url);
+  const source = gltf.scene;
+  source.name = `${assignment.archetype.id}-glb-source`;
+
+  const avatar = new THREE.Group();
+  avatar.name = `${assignment.archetype.id}-glb-avatar`;
+  source.rotation.x = -Math.PI / 2;
+  source.scale.setScalar(0.74);
+  avatar.add(source);
+
+  avatar.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(avatar);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  source.position.x -= center.x;
+  source.position.z -= center.z;
+  source.position.y -= box.min.y;
+
+  source.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      for (const material of materials) {
+        if (material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshBasicMaterial) {
+          material.needsUpdate = true;
+        }
+      }
+    }
+  });
+
+  const parts = {
+    torso: makePartCluster(collectModelParts(source, /_(torso|hips|neck|jacket|crop_top|wrap_|long_coat|bandage_top|oni_mask)/)),
+    head: makePartCluster(collectModelParts(source, /_(head|hair|helmet|visor|lens|goggles)/)),
+    shoulderL: makePartCluster(collectModelParts(source, /_(upper_arm|cyber_upper_arm|tattoo_arm)_-1$/)),
+    shoulderR: makePartCluster(collectModelParts(source, /_(upper_arm|cyber_upper_arm|tattoo_arm)_1$/)),
+    elbowL: makePartCluster(collectModelParts(source, /_(forearm|cyber_forearm|hand_wrap)_-1$|_(hand|cyber_hand)_-1$/)),
+    elbowR: makePartCluster(collectModelParts(source, /_(forearm|cyber_forearm|hand_wrap)_1$|_(hand|cyber_hand)_1$/)),
+    hipL: makePartCluster(collectModelParts(source, /_upper_leg_-1$/)),
+    hipR: makePartCluster(collectModelParts(source, /_upper_leg_1$/)),
+    kneeL: makePartCluster(collectModelParts(source, /_(lower_leg|shoe)_-1$/)),
+    kneeR: makePartCluster(collectModelParts(source, /_(lower_leg|shoe)_1$/)),
+    footL: findModelPart(source, /_shoe_-1$/) ?? new THREE.Group(),
+    footR: findModelPart(source, /_shoe_1$/) ?? new THREE.Group(),
+    bag: makePartCluster(collectModelParts(source, /crossbody|bag|strap/)),
+    katana: makePartCluster(collectModelParts(source, /katana|sheath|handle|guard|hip_/)),
+    pendant: makePartCluster(collectModelParts(source, /red_tag|tag_ring|flame_ring|cigarette/)),
+  } satisfies AvatarParts;
+
+  avatar.userData.parts = parts;
+  avatar.userData.source = source;
+  avatar.userData.mode = "glb3d";
+  return avatar;
+}
 
 function roundedMat(color: string, roughness = 0.42, metalness = 0.06): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
@@ -355,12 +461,29 @@ export class Runner3D {
   shield = 0;
   private jumpBuffer = 0;
   private landingSquash = 0;
+  private disposed = false;
 
   constructor(scene: THREE.Scene, level: LevelSpec, assignment: Assignment, callbacks: Runner3DCallbacks) {
     this.level = level;
     this.assignment = assignment;
     this.callbacks = callbacks;
-    this.player = buildRunnerAvatar(assignment);
+    this.player = new THREE.Group();
+    this.player.name = "runner-player";
+    const fallback = buildRunnerAvatar(assignment);
+    this.player.add(fallback);
+    this.player.userData.parts = fallback.userData.parts;
+    this.player.userData.mode = "fallback-rig3d-loading-glb";
+    loadKaizenAvatarModel(assignment)
+      .then((model) => {
+        if (this.disposed) return;
+        this.player.clear();
+        this.player.add(model);
+        this.player.userData.parts = model.userData.parts;
+        this.player.userData.mode = "glb3d";
+      })
+      .catch((error) => {
+        console.warn("Kaizenverse GLB runner failed to load; keeping procedural fallback.", error);
+      });
     this.player.position.set(0, 0, zOf(this.x));
     this.group.add(this.player);
 
@@ -373,6 +496,7 @@ export class Runner3D {
   }
 
   dispose(scene: THREE.Scene): void {
+    this.disposed = true;
     scene.remove(this.group);
   }
 
@@ -697,28 +821,28 @@ export class Runner3D {
 
     if (this.grounded) {
       const stride = wave;
-      if (parts.hipL) parts.hipL.rotation.x = stride * 0.72;
-      if (parts.hipR) parts.hipR.rotation.x = -stride * 0.72;
-      if (parts.kneeL) parts.kneeL.rotation.x = Math.max(0.1, -stride) * 0.98 + 0.08;
-      if (parts.kneeR) parts.kneeR.rotation.x = Math.max(0.1, stride) * 0.98 + 0.08;
-      if (parts.shoulderL) parts.shoulderL.rotation.x = -stride * 0.72;
-      if (parts.shoulderR) parts.shoulderR.rotation.x = stride * 0.72;
-      if (parts.elbowL) parts.elbowL.rotation.x = 0.25 + Math.max(0, stride) * 0.45;
-      if (parts.elbowR) parts.elbowR.rotation.x = 0.25 + Math.max(0, -stride) * 0.45;
+      applyClusterRotation(parts.hipL, stride * 0.72);
+      applyClusterRotation(parts.hipR, -stride * 0.72);
+      applyClusterRotation(parts.kneeL, Math.max(0.1, -stride) * 0.98 + 0.08);
+      applyClusterRotation(parts.kneeR, Math.max(0.1, stride) * 0.98 + 0.08);
+      applyClusterRotation(parts.shoulderL, -stride * 0.72);
+      applyClusterRotation(parts.shoulderR, stride * 0.72);
+      applyClusterRotation(parts.elbowL, 0.25 + Math.max(0, stride) * 0.45);
+      applyClusterRotation(parts.elbowR, 0.25 + Math.max(0, -stride) * 0.45);
       if (parts.torso) {
         parts.torso.rotation.x = 0.08 + Math.abs(counter) * 0.025;
         parts.torso.rotation.z = laneLean * 0.5;
       }
     } else {
       const rising = this.vy > 0;
-      if (parts.hipL) parts.hipL.rotation.x = rising ? -0.25 : 0.28;
-      if (parts.hipR) parts.hipR.rotation.x = rising ? -0.08 : 0.18;
-      if (parts.kneeL) parts.kneeL.rotation.x = rising ? 1.15 : 0.45;
-      if (parts.kneeR) parts.kneeR.rotation.x = rising ? 0.85 : 0.35;
-      if (parts.shoulderL) parts.shoulderL.rotation.x = rising ? -0.85 : -0.25;
-      if (parts.shoulderR) parts.shoulderR.rotation.x = rising ? -0.65 : -0.15;
-      if (parts.elbowL) parts.elbowL.rotation.x = 0.55;
-      if (parts.elbowR) parts.elbowR.rotation.x = 0.5;
+      applyClusterRotation(parts.hipL, rising ? -0.25 : 0.28);
+      applyClusterRotation(parts.hipR, rising ? -0.08 : 0.18);
+      applyClusterRotation(parts.kneeL, rising ? 1.15 : 0.45);
+      applyClusterRotation(parts.kneeR, rising ? 0.85 : 0.35);
+      applyClusterRotation(parts.shoulderL, rising ? -0.85 : -0.25);
+      applyClusterRotation(parts.shoulderR, rising ? -0.65 : -0.15);
+      applyClusterRotation(parts.elbowL, 0.55);
+      applyClusterRotation(parts.elbowR, 0.5);
       if (parts.torso) {
         parts.torso.rotation.x = rising ? -0.14 : 0.2;
         parts.torso.rotation.z = laneLean * 0.6;
@@ -730,19 +854,16 @@ export class Runner3D {
       parts.head.rotation.z = -laneLean * 0.55;
     }
     if (parts.bag) {
-      parts.bag.rotation.x = Math.sin(t + 0.8) * 0.18 - this.vy * 0.006;
-      parts.bag.rotation.z = -laneLean * 0.8;
+      applyClusterRotation(parts.bag, Math.sin(t + 0.8) * 0.18 - this.vy * 0.006, -laneLean * 0.8);
     }
     if (parts.katana) {
-      parts.katana.rotation.x = 0.2 + Math.sin(t + 1.4) * 0.06 - this.vy * 0.004;
-      parts.katana.rotation.z = -0.62 - laneLean * 0.8;
+      applyClusterRotation(parts.katana, 0.2 + Math.sin(t + 1.4) * 0.06 - this.vy * 0.004, -0.62 - laneLean * 0.8);
     }
     if (parts.pendant) {
-      parts.pendant.rotation.x = Math.sin(t * 1.6) * 0.2 - this.vy * 0.01;
-      parts.pendant.rotation.z = laneLean * -1.1;
+      applyClusterRotation(parts.pendant, Math.sin(t * 1.6) * 0.2 - this.vy * 0.01, laneLean * -1.1);
     }
-    if (parts.footL) parts.footL.rotation.x = this.grounded ? -Math.max(0, wave) * 0.42 : 0.26;
-    if (parts.footR) parts.footR.rotation.x = this.grounded ? -Math.max(0, -wave) * 0.42 : 0.22;
+    applyClusterRotation(parts.footL, this.grounded ? -Math.max(0, wave) * 0.42 : 0.26);
+    applyClusterRotation(parts.footR, this.grounded ? -Math.max(0, -wave) * 0.42 : 0.22);
   }
 
   private segmentAt(x: number): Segment | undefined {
