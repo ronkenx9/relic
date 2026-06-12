@@ -19,9 +19,9 @@ Source files:
 
 Runtime usage:
 
-- `base/base-kaizen-spritesheet.png` is used for the Wanderer playable fighter.
+- `<archetype>/<archetype>-spritesheet.png` is used for the matching playable fighter when available.
 - `base/small_icon.png` is shown on the forge gate.
-- `base/portrait.png` is shown on the run-complete card for Wanderer runs.
+- `<archetype>/portrait.png` is shown on the run-complete card for matching runs.
 
 Frame order:
 

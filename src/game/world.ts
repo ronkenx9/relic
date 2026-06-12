@@ -1,6 +1,7 @@
 /** Voxel world builder — renders a LevelSpec as instanced cubes. */
 import * as THREE from "three";
 import type { LevelSpec, Segment, Tile } from "../engine/levelgen.js";
+import { buildTrapDecor } from "./obstacles.js";
 
 export const BIOME_COLORS: Record<Segment["biome"], { ground: string; accent: string; fog: string; sky: string }> = {
   origins: { ground: "#C9A86A", accent: "#E3C68C", fog: "#2A2118", sky: "#171310" },
@@ -59,7 +60,7 @@ export function buildWorld(scene: THREE.Scene, level: LevelSpec): WorldHandles {
     const c = BIOME_COLORS[seg.biome];
     for (let d = 0; d < depth; d++) {
       for (let r = 0; r < rows; r++) {
-        m4.setPosition(tile.x * TILE, (tile.groundY - d) * TILE - TILE / 2, -r * TILE);
+        m4.setPosition(tile.x * TILE, (tile.groundY - d) * TILE + TILE / 2, -r * TILE); // top face at groundY+1 == physics surface
         inst.setMatrixAt(i, m4);
         color.set(d === 0 ? c.ground : c.accent).multiplyScalar(d === 0 ? 1 : 0.55 - r * 0.12);
         // subtle per-block variation so it doesn't look like plastic
@@ -80,33 +81,39 @@ export function buildWorld(scene: THREE.Scene, level: LevelSpec): WorldHandles {
       if (t.vanish && t.groundY >= 0) {
         const c = BIOME_COLORS[seg.biome];
         const mesh = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: c.ground }));
-        mesh.position.set(t.x * TILE, t.groundY * TILE - TILE / 2, 0);
+        mesh.position.set(t.x * TILE, t.groundY * TILE + TILE / 2, 0); // aligned with physics surface
         group.add(mesh);
         vanishTiles.set(t.x, { mesh, tile: t, state: "solid", t: 0 });
       }
 
-  // --- spikes: cones hidden underground until popped ---
+  // --- spikes: obsidian cones with hot tips, hidden underground until popped ---
   const spikes: WorldHandles["spikes"] = new Map();
   const spikeGeo = new THREE.ConeGeometry(0.32, 0.8, 4);
+  const spikeMat = new THREE.MeshStandardMaterial({
+    color: "#16181D", emissive: "#FF3A57", emissiveIntensity: 0.55, metalness: 0.3, roughness: 0.45,
+  });
   for (const seg of level.segments)
     for (const t of seg.tiles)
       if (t.spike) {
-        const mesh = new THREE.Mesh(spikeGeo, new THREE.MeshLambertMaterial({ color: "#D8D4CB" }));
-        mesh.position.set(t.x * TILE, (t.groundY + 1) * TILE - 1.3, 0); // submerged
+        const mesh = new THREE.Mesh(spikeGeo, spikeMat);
+        mesh.position.set(t.x * TILE, (t.groundY + 1) * TILE - 0.55, 0); // submerged just below the surface
         mesh.visible = false;
         group.add(mesh);
         spikes.set(t.x, { mesh, armed: false, popped: false });
       }
 
-  // --- coins ---
+  // --- coins: gold discs with a warm core glow ---
   const coins: WorldHandles["coins"] = new Map();
-  const coinGeo = new THREE.BoxGeometry(0.34, 0.34, 0.12);
-  const coinMat = new THREE.MeshStandardMaterial({ color: "#E3A52F", metalness: 0.7, roughness: 0.3, emissive: "#3A2A00" });
+  const coinGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.07, 14);
+  coinGeo.rotateX(Math.PI / 2); // face the camera, spin on world Y
+  const coinMat = new THREE.MeshStandardMaterial({
+    color: "#FFC75E", metalness: 0.85, roughness: 0.25, emissive: "#7A5200", emissiveIntensity: 0.9,
+  });
   for (const seg of level.segments)
     for (const t of seg.tiles)
       if (t.coin && t.groundY >= 0) {
         const mesh = new THREE.Mesh(coinGeo, coinMat);
-        mesh.position.set(t.x * TILE, (t.groundY + 1.1) * TILE, 0);
+        mesh.position.set(t.x * TILE, (t.groundY + 1.55) * TILE, 0);
         group.add(mesh);
         coins.set(t.x, mesh);
       }
@@ -122,28 +129,35 @@ export function buildWorld(scene: THREE.Scene, level: LevelSpec): WorldHandles {
   const portalX = level.totalLength - 3;
   const endSeg = level.segments.at(-1)!;
   const endTile = tileIndex.get(portalX) ?? endSeg.tiles.at(-1)!;
-  portal.position.set(portalX * TILE, endTile.groundY * TILE, 0);
+  portal.position.set(portalX * TILE, (endTile.groundY + 1) * TILE, 0);
   group.add(portal);
 
-  // --- backdrop pillars per segment (cheap skyline depth) ---
-  const back = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), level.segments.length * 8);
-  back.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(back.count * 3), 3);
-  let bi = 0;
-  for (const seg of level.segments) {
-    const c = new THREE.Color(BIOME_COLORS[seg.biome].accent).multiplyScalar(0.32);
-    const w = seg.endX - seg.startX;
-    for (let k = 0; k < 8; k++) {
-      const px = seg.startX + ((k * 37 + seg.startX * 11) % Math.max(1, w));
-      const h = 2 + ((px * 13) % 5);
-      m4.makeScale(1, h, 1);
-      m4.setPosition(px * TILE, h / 2 - 0.5, -4 - ((px * 7) % 3));
-      back.setMatrixAt(bi, m4);
-      back.setColorAt(bi, c);
-      bi++;
+  // --- fake contact AO: dark strip under the top-front edge + bright top lip ---
+  {
+    const surfCount = solidTiles.length;
+    const aoGeo = new THREE.PlaneGeometry(TILE, 0.16);
+    const aoMat = new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.28, depthWrite: false });
+    const ao = new THREE.InstancedMesh(aoGeo, aoMat, surfCount);
+    const lipGeo = new THREE.PlaneGeometry(TILE, TILE);
+    lipGeo.rotateX(-Math.PI / 2);
+    const lipMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.16, depthWrite: false, color: "#FFFFFF" });
+    const lip = new THREE.InstancedMesh(lipGeo, lipMat, surfCount);
+    let ai = 0;
+    for (const { tile } of solidTiles) {
+      m4.identity();
+      m4.setPosition(tile.x * TILE, (tile.groundY + 1) * TILE - 0.09, 0.501);
+      ao.setMatrixAt(ai, m4);
+      m4.setPosition(tile.x * TILE, (tile.groundY + 1) * TILE + 0.002, 0);
+      lip.setMatrixAt(ai, m4);
+      ai++;
     }
+    ao.count = ai;
+    lip.count = ai;
+    group.add(ao, lip);
   }
-  back.count = bi;
-  group.add(back);
+
+  // (backdrop pillars replaced by scenery.ts parallax skyline)
+  group.add(buildTrapDecor(level));
 
   return {
     group,
@@ -165,7 +179,15 @@ export function buildWorld(scene: THREE.Scene, level: LevelSpec): WorldHandles {
 
 type FighterFrame = "idle" | "run_01" | "run_02" | "jump" | "fall" | "hit" | "ability" | "victory";
 
-const BASE_KAIZEN_SHEET = "assets/kaizen/base/base-kaizen-spritesheet.png";
+const SPRITE_SHEETS: Partial<Record<string, string>> = {
+  wanderer: "assets/kaizen/base/base-kaizen-spritesheet.png",
+  trickster: "assets/kaizen/trickster/trickster-spritesheet.png",
+  duelist: "assets/kaizen/duelist/duelist-spritesheet.png",
+  baron: "assets/kaizen/baron/baron-spritesheet.png",
+  oracle: "assets/kaizen/oracle/oracle-spritesheet.png",
+  machine: "assets/kaizen/machine/machine-spritesheet.png",
+  unwritten: "assets/kaizen/unwritten/unwritten-spritesheet.png",
+};
 const SPRITE_FRAMES: Record<FighterFrame, { col: number; row: number }> = {
   idle: { col: 0, row: 0 },
   run_01: { col: 1, row: 0 },
@@ -177,15 +199,16 @@ const SPRITE_FRAMES: Record<FighterFrame, { col: number; row: number }> = {
   victory: { col: 3, row: 1 },
 };
 
-/** Build the playable fighter. Wanderer uses the new Base Kaizen sprite sheet; the rest keep the procedural fallback. */
+/** Build the playable fighter. Archetypes with generated sprite sheets use them; others keep the procedural fallback. */
 export function buildFighter(palette: { body: string; trim: string; glow: string }, archetypeId?: string): THREE.Group {
-  if (archetypeId === "wanderer") return buildSpriteFighter();
+  const sheet = archetypeId ? SPRITE_SHEETS[archetypeId] : undefined;
+  if (sheet) return buildSpriteFighter(sheet);
   return buildVoxelFighter(palette);
 }
 
-function buildSpriteFighter(): THREE.Group {
+function buildSpriteFighter(sheetPath: string): THREE.Group {
   const g = new THREE.Group();
-  const texture = new THREE.TextureLoader().load(BASE_KAIZEN_SHEET);
+  const texture = new THREE.TextureLoader().load(sheetPath);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
@@ -193,12 +216,15 @@ function buildSpriteFighter(): THREE.Group {
   texture.offset.set(0, 0.5);
   texture.magFilter = THREE.LinearFilter;
 
-  const mat = new THREE.MeshBasicMaterial({
+  const mat = new THREE.MeshLambertMaterial({
     map: texture,
     transparent: true,
     alphaTest: 0.04,
     side: THREE.DoubleSide,
     depthWrite: false,
+    emissive: "#FFFFFF",
+    emissiveMap: texture,
+    emissiveIntensity: 0.16, // faint self-light: readable in the dark winter, still dims
   });
   const sprite = new THREE.Mesh(new THREE.PlaneGeometry(2.75, 2.75), mat);
   sprite.position.set(0.25, 1.28, 0.06);

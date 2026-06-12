@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "project": "RELIC x KAIZENVERSE",
   "pipeline": "generated-sprite-source",
   "notes": [
@@ -21,8 +21,9 @@
         "grid": {
           "columns": 4,
           "rows": 2,
-          "cellWidth": 418,
-          "cellHeight": 470
+          "cellWidth": 418.0,
+          "cellHeight": 470.5,
+          "cropInset": 0
         },
         "frameOrder": [
           "idle",
@@ -35,14 +36,54 @@
           "victory"
         ],
         "frames": {
-          "idle": { "x": 0, "y": 0, "w": 418, "h": 470 },
-          "run_01": { "x": 418, "y": 0, "w": 418, "h": 470 },
-          "run_02": { "x": 836, "y": 0, "w": 418, "h": 470 },
-          "jump": { "x": 1254, "y": 0, "w": 418, "h": 470 },
-          "fall": { "x": 0, "y": 470, "w": 418, "h": 471 },
-          "hit": { "x": 418, "y": 470, "w": 418, "h": 471 },
-          "ability": { "x": 836, "y": 470, "w": 418, "h": 471 },
-          "victory": { "x": 1254, "y": 470, "w": 418, "h": 471 }
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 418,
+            "h": 470
+          },
+          "run_01": {
+            "x": 418,
+            "y": 0,
+            "w": 418,
+            "h": 470
+          },
+          "run_02": {
+            "x": 836,
+            "y": 0,
+            "w": 418,
+            "h": 470
+          },
+          "jump": {
+            "x": 1254,
+            "y": 0,
+            "w": 418,
+            "h": 470
+          },
+          "fall": {
+            "x": 0,
+            "y": 470,
+            "w": 418,
+            "h": 471
+          },
+          "hit": {
+            "x": 418,
+            "y": 470,
+            "w": 418,
+            "h": 471
+          },
+          "ability": {
+            "x": 836,
+            "y": 470,
+            "w": 418,
+            "h": 471
+          },
+          "victory": {
+            "x": 1254,
+            "y": 470,
+            "w": 418,
+            "h": 471
+          }
         }
       },
       "exports": {
@@ -63,25 +104,622 @@
         "portrait": "base/portrait.png",
         "smallIcon": "base/small_icon.png"
       }
+    },
+    "trickster": {
+      "displayName": "The Trickster",
+      "archetypeId": "trickster",
+      "sourcePrompt": "White-haired grinning Kaizenverse Trickster with goggles, violet street jacket, NFT/mint pouch details, painterly anime side-scroller sprite sheet.",
+      "sheet": {
+        "alpha": "trickster/trickster-spritesheet.png",
+        "chromaKeySource": "trickster/trickster-spritesheet-key.png",
+        "width": 1536,
+        "height": 1024,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 384.0,
+          "cellHeight": 512.0,
+          "cropInset": 5
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_01": {
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_02": {
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "jump": {
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "fall": {
+            "x": 0,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "hit": {
+            "x": 384,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "ability": {
+            "x": 768,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "victory": {
+            "x": 1152,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "trickster/frames/idle.png",
+          "run_01": "trickster/frames/run_01.png",
+          "run_02": "trickster/frames/run_02.png",
+          "jump": "trickster/frames/jump.png",
+          "fall": "trickster/frames/fall.png",
+          "hit": "trickster/frames/hit.png",
+          "ability": "trickster/frames/ability.png",
+          "victory": "trickster/frames/victory.png"
+        },
+        "portrait": "trickster/portrait.png",
+        "smallIcon": "trickster/small_icon.png"
+      }
+    },
+    "duelist": {
+      "displayName": "The Duelist",
+      "archetypeId": "duelist",
+      "sourcePrompt": "Red-hood Kaizenverse Duelist, aggressive trader-fighter silhouette, black tactical streetwear, painterly anime side-scroller sprite sheet.",
+      "sheet": {
+        "alpha": "duelist/duelist-spritesheet.png",
+        "chromaKeySource": "duelist/duelist-spritesheet-key.png",
+        "width": 1536,
+        "height": 1024,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 384.0,
+          "cellHeight": 512.0,
+          "cropInset": 5
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_01": {
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_02": {
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "jump": {
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "fall": {
+            "x": 0,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "hit": {
+            "x": 384,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "ability": {
+            "x": 768,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "victory": {
+            "x": 1152,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "duelist/frames/idle.png",
+          "run_01": "duelist/frames/run_01.png",
+          "run_02": "duelist/frames/run_02.png",
+          "jump": "duelist/frames/jump.png",
+          "fall": "duelist/frames/fall.png",
+          "hit": "duelist/frames/hit.png",
+          "ability": "duelist/frames/ability.png",
+          "victory": "duelist/frames/victory.png"
+        },
+        "portrait": "duelist/portrait.png",
+        "smallIcon": "duelist/small_icon.png"
+      }
+    },
+    "baron": {
+      "displayName": "The Baron",
+      "archetypeId": "baron",
+      "sourcePrompt": "Gold-accented Kaizenverse Baron, whale/yield street boss with jewelry and ledger satchel, painterly anime side-scroller sprite sheet.",
+      "sheet": {
+        "alpha": "baron/baron-spritesheet.png",
+        "chromaKeySource": "baron/baron-spritesheet-key.png",
+        "width": 1774,
+        "height": 887,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 443.5,
+          "cellHeight": 443.5,
+          "cropInset": 5
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 444,
+            "h": 444
+          },
+          "run_01": {
+            "x": 444,
+            "y": 0,
+            "w": 443,
+            "h": 444
+          },
+          "run_02": {
+            "x": 887,
+            "y": 0,
+            "w": 443,
+            "h": 444
+          },
+          "jump": {
+            "x": 1330,
+            "y": 0,
+            "w": 444,
+            "h": 444
+          },
+          "fall": {
+            "x": 0,
+            "y": 444,
+            "w": 444,
+            "h": 443
+          },
+          "hit": {
+            "x": 444,
+            "y": 444,
+            "w": 443,
+            "h": 443
+          },
+          "ability": {
+            "x": 887,
+            "y": 444,
+            "w": 443,
+            "h": 443
+          },
+          "victory": {
+            "x": 1330,
+            "y": 444,
+            "w": 444,
+            "h": 443
+          }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "baron/frames/idle.png",
+          "run_01": "baron/frames/run_01.png",
+          "run_02": "baron/frames/run_02.png",
+          "jump": "baron/frames/jump.png",
+          "fall": "baron/frames/fall.png",
+          "hit": "baron/frames/hit.png",
+          "ability": "baron/frames/ability.png",
+          "victory": "baron/frames/victory.png"
+        },
+        "portrait": "baron/portrait.png",
+        "smallIcon": "baron/small_icon.png"
+      }
+    },
+    "oracle": {
+      "displayName": "The Oracle",
+      "archetypeId": "oracle",
+      "sourcePrompt": "Blindfolded Kaizenverse Oracle with silver hair, deep blue coat, talisman/data charm, painterly anime side-scroller sprite sheet.",
+      "sheet": {
+        "alpha": "oracle/oracle-spritesheet.png",
+        "chromaKeySource": "oracle/oracle-spritesheet-key.png",
+        "width": 1536,
+        "height": 1024,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 384.0,
+          "cellHeight": 512.0,
+          "cropInset": 5
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_01": {
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_02": {
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "jump": {
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "fall": {
+            "x": 0,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "hit": {
+            "x": 384,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "ability": {
+            "x": 768,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "victory": {
+            "x": 1152,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "oracle/frames/idle.png",
+          "run_01": "oracle/frames/run_01.png",
+          "run_02": "oracle/frames/run_02.png",
+          "jump": "oracle/frames/jump.png",
+          "fall": "oracle/frames/fall.png",
+          "hit": "oracle/frames/hit.png",
+          "ability": "oracle/frames/ability.png",
+          "victory": "oracle/frames/victory.png"
+        },
+        "portrait": "oracle/portrait.png",
+        "smallIcon": "oracle/small_icon.png"
+      }
+    },
+    "machine": {
+      "displayName": "The Machine",
+      "archetypeId": "machine",
+      "sourcePrompt": "Red mecha-helmet Kaizenverse Machine with black tactical armor and sharp red glow accents, painterly anime side-scroller sprite sheet.",
+      "sheet": {
+        "alpha": "machine/machine-spritesheet.png",
+        "chromaKeySource": "machine/machine-spritesheet-key.png",
+        "width": 1536,
+        "height": 1024,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 384.0,
+          "cellHeight": 512.0,
+          "cropInset": 5
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_01": {
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_02": {
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "jump": {
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "fall": {
+            "x": 0,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "hit": {
+            "x": 384,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "ability": {
+            "x": 768,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "victory": {
+            "x": 1152,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "machine/frames/idle.png",
+          "run_01": "machine/frames/run_01.png",
+          "run_02": "machine/frames/run_02.png",
+          "jump": "machine/frames/jump.png",
+          "fall": "machine/frames/fall.png",
+          "hit": "machine/frames/hit.png",
+          "ability": "machine/frames/ability.png",
+          "victory": "machine/frames/victory.png"
+        },
+        "portrait": "machine/portrait.png",
+        "smallIcon": "machine/small_icon.png"
+      }
+    },
+    "unwritten": {
+      "displayName": "The Unwritten",
+      "archetypeId": "unwritten",
+      "sourcePrompt": "Faceless hooded Kaizenverse Unwritten silhouette, blank parchment tag, charcoal and bone-white glow accents, painterly anime side-scroller sprite sheet.",
+      "sheet": {
+        "alpha": "unwritten/unwritten-spritesheet.png",
+        "chromaKeySource": "unwritten/unwritten-spritesheet-key.png",
+        "width": 1536,
+        "height": 1024,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 384.0,
+          "cellHeight": 512.0,
+          "cropInset": 5
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": {
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_01": {
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "run_02": {
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "jump": {
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 512
+          },
+          "fall": {
+            "x": 0,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "hit": {
+            "x": 384,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "ability": {
+            "x": 768,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          },
+          "victory": {
+            "x": 1152,
+            "y": 512,
+            "w": 384,
+            "h": 512
+          }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "unwritten/frames/idle.png",
+          "run_01": "unwritten/frames/run_01.png",
+          "run_02": "unwritten/frames/run_02.png",
+          "jump": "unwritten/frames/jump.png",
+          "fall": "unwritten/frames/fall.png",
+          "hit": "unwritten/frames/hit.png",
+          "ability": "unwritten/frames/ability.png",
+          "victory": "unwritten/frames/victory.png"
+        },
+        "portrait": "unwritten/portrait.png",
+        "smallIcon": "unwritten/small_icon.png"
+      }
     }
   },
   "futureBatches": [
     {
-      "id": "batch_2_archetypes",
-      "characters": ["trickster", "duelist", "baron", "oracle", "machine", "unwritten"],
-      "sameAssetSetAs": "base_kaizen"
-    },
-    {
       "id": "batch_3_world",
-      "assets": ["neon_ward_rooftop", "origins_alley", "crucible_red_storm", "floor_tiles", "rupture_portal", "rain_overlay", "neon_signs"]
+      "assets": [
+        "neon_ward_rooftop",
+        "origins_alley",
+        "crucible_red_storm",
+        "floor_tiles",
+        "rupture_portal",
+        "rain_overlay",
+        "neon_signs"
+      ]
     },
     {
       "id": "batch_4_obstacles_bosses",
-      "assets": ["bear_shadow", "red_candle_slash", "gas_debris", "ghost_token", "save_lantern", "failed_transaction_glitch", "cursed_trade_boss_card"]
+      "assets": [
+        "bear_shadow",
+        "red_candle_slash",
+        "gas_debris",
+        "ghost_token",
+        "save_lantern",
+        "failed_transaction_glitch",
+        "cursed_trade_boss_card"
+      ]
     },
     {
       "id": "batch_5_ui",
-      "assets": ["health_bar", "style_meter", "archetype_badge", "score_card", "run_complete_card", "mint_button", "share_button", "forge_loading_screen", "kaizen_stamp"]
+      "assets": [
+        "health_bar",
+        "style_meter",
+        "archetype_badge",
+        "score_card",
+        "run_complete_card",
+        "mint_button",
+        "share_button",
+        "forge_loading_screen",
+        "kaizen_stamp"
+      ]
     }
   ]
 }
