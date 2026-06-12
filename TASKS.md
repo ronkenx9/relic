@@ -44,12 +44,12 @@
       gate — agent does a first pass, owner confirms before submission).
 
 ## Phase 4 — Contract (deployment award)
-- [ ] Relic.sol: ERC-721, mintRelic(subject, sheetHash, uri), refreshRelic (kaizen evolution),
-      archetypesHash pinned at deploy. Foundry tests.
-      GATE: forge tests green.
-- [ ] Deploy Mantle Sepolia 5003 + Sourcify verify + record address in CLAUDE.md.
-      GATE: eth_getCode non-empty, verified, address recorded.
-- [ ] Mint one real sheet (sheetHash on-chain) as the deployment-award proof tx.
+- [x] Relic.sol: ERC-721, mintRelic + refreshRelic (kaizen evolution), archetypesHash pinned.
+      GATE: forge tests green ✅ 7/7 (dependency-free test pattern).
+- [x] Deployed `0x903cfd9F9F315301A80ad6A1D85da0F2E081b1a4` (Mantle Sepolia 5003).
+      GATE ✅ eth_getCode non-empty · Sourcify exact_match · recorded in CLAUDE.md.
+- [x] Token #1 minted: vitalik's WANDERER sheet, on-chain sheetHash verified == local
+      (tx `0x09534829…a0cd`, scripts/mint-proof.ts).
 
 ## Phase 5 — Frontend (the consumer surface)
 - [x] Forge page (as THE RUN gate — owner re-ordered: game-first): paste address → moments → archetype → character sheet. Sheet BEFORE any

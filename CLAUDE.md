@@ -22,7 +22,12 @@ The writing is the product; treat narrative gates as blocking.
   (owner-art-directed — supersedes the "owner PNGs only" rule; still NO Minecraft IP). Batch 1
   (Base Kaizen sprite sheet + frames + portrait/icon) landed in frontend/assets/kaizen/;
   Wanderer uses the sprite, other archetypes keep voxel fallback until their batch lands.
-- Contract (Relic.sol) NOT deployed yet — next phase with character sheet + mint.
+- Relic.sol: `0x903cfd9F9F315301A80ad6A1D85da0F2E081b1a4` (Mantle Sepolia 5003)
+  - Deploy tx: `0xaa6b9e40f45bd64f0cc814e32b2f246d533d8d9702b3a89420c0630a49540611` · Sourcify exact_match
+  - archetypesHash pinned: `0xba1bd6aaf492122e675553d32ba477791175193e87ffe3ebc0a01e276f432302` (= keccak of archetypes.json)
+  - Token #1 = vitalik's WANDERER sheet, sheetHash `0x9b666c76…2a5d` on-chain
+    (mint tx `0x095348294b810ca189ac1b4fa6d9d57256e4017dae88dd23cdf46fcc611ea0cd`)
+  - Forge/minter = provenance deployer `0x093c1F3C…acd8`
 
 ## Agent lanes (avoid collisions)
 - **Codex:** asset batches 2-5 (archetype sprites, world art, obstacles, UI) + sprite wiring

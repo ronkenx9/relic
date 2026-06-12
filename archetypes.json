@@ -1,0 +1,93 @@
+{
+  "version": "1.0.0",
+  "tieBreak": [
+    "machine",
+    "baron",
+    "oracle",
+    "trickster",
+    "duelist",
+    "wanderer"
+  ],
+  "archetypes": {
+    "wanderer": {
+      "id": "wanderer",
+      "name": "THE WANDERER",
+      "tagline": "Old roads. Long holds. Still here.",
+      "palette": {
+        "body": "#3E6B58",
+        "trim": "#EDE9E0",
+        "glow": "#7CC79B"
+      }
+    },
+    "trickster": {
+      "id": "trickster",
+      "name": "THE TRICKSTER",
+      "tagline": "Mints first, reads later.",
+      "palette": {
+        "body": "#7B4FA6",
+        "trim": "#F2E9FF",
+        "glow": "#C99BFF"
+      }
+    },
+    "duelist": {
+      "id": "duelist",
+      "name": "THE DUELIST",
+      "tagline": "Every chart is a challenge.",
+      "palette": {
+        "body": "#A6342E",
+        "trim": "#FFE9E6",
+        "glow": "#FF7A6E"
+      }
+    },
+    "baron": {
+      "id": "baron",
+      "name": "THE BARON",
+      "tagline": "Size talks. Yield walks.",
+      "palette": {
+        "body": "#8C6D1F",
+        "trim": "#FFF6DC",
+        "glow": "#E3A52F"
+      }
+    },
+    "oracle": {
+      "id": "oracle",
+      "name": "THE ORACLE",
+      "tagline": "Early. Quiet. Right.",
+      "palette": {
+        "body": "#27557A",
+        "trim": "#E6F2FF",
+        "glow": "#6EC1FF"
+      }
+    },
+    "machine": {
+      "id": "machine",
+      "name": "THE MACHINE",
+      "tagline": "No sleep. No tilt. No mercy.",
+      "palette": {
+        "body": "#444B52",
+        "trim": "#E8EBEE",
+        "glow": "#FF3B30"
+      }
+    },
+    "unwritten": {
+      "id": "unwritten",
+      "name": "THE UNWRITTEN",
+      "tagline": "Your story hasn't started. Mint page one.",
+      "palette": {
+        "body": "#2A2A2E",
+        "trim": "#BFBFC4",
+        "glow": "#FFFFFF"
+      }
+    }
+  },
+  "rules": {
+    "unwritten": "events < 3",
+    "wanderer": "+2 age>=730d · +1 0<tx/mo<=8 · +2 bear survivor · +1 diamond hands",
+    "trickster": "+3 nftRatio>=0.25 (else +1.5 if >=0.12) · +1 contractDiversity>=0.35",
+    "duelist": "+2.5 defiRatio>=0.4 (else +1 if >=0.2) · +1.5 tx/mo>=20",
+    "baron": "+3 valueMoved>=50 native (else +1.5 if >=5) · +1 defiRatio>=0.25 & tx/mo<20",
+    "oracle": "+2 age>=1095d · +1 failRatio<=0.02 · +1.5 tx/mo<=4",
+    "machine": "+2.5 cadenceRegularity>=0.6 · +1.5 nightRatio>=0.35 · +2 deployedContract · +1 tx/mo>=60",
+    "winner": "max score; ties resolved by tieBreak order"
+  }
+}
