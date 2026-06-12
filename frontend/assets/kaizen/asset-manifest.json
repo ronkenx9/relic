@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "project": "RELIC x KAIZENVERSE",
+  "pipeline": "generated-sprite-source",
+  "notes": [
+    "Batch 1 starts with Base Kaizen / The Wanderer only.",
+    "The runtime is currently a Three.js voxel runner. These 2D assets are staged as the style lock and future sprite/portrait source pack.",
+    "The alpha sheet was produced from the chroma-key source with the Codex imagegen chroma removal helper."
+  ],
+  "characters": {
+    "base_kaizen": {
+      "displayName": "Base Kaizen / The Wanderer",
+      "archetypeId": "wanderer",
+      "sourcePrompt": "Kaizenverse playable 2D side-scroller sprite sheet, Base Kaizen, pink varsity jacket with gray sleeves, black shirt, loose black cargo pants, crossbody bag, katana on back, red pendant tag, clean readable silhouette, painterly anime sprite style, strong ink outline, simplified game-ready details, transparent background, consistent proportions, side-facing poses.",
+      "sheet": {
+        "alpha": "base/base-kaizen-spritesheet.png",
+        "chromaKeySource": "base/base-kaizen-spritesheet-key.png",
+        "previewSource": "base/base-kaizen-spritesheet-preview.png",
+        "width": 1672,
+        "height": 941,
+        "grid": {
+          "columns": 4,
+          "rows": 2,
+          "cellWidth": 418,
+          "cellHeight": 470
+        },
+        "frameOrder": [
+          "idle",
+          "run_01",
+          "run_02",
+          "jump",
+          "fall",
+          "hit",
+          "ability",
+          "victory"
+        ],
+        "frames": {
+          "idle": { "x": 0, "y": 0, "w": 418, "h": 470 },
+          "run_01": { "x": 418, "y": 0, "w": 418, "h": 470 },
+          "run_02": { "x": 836, "y": 0, "w": 418, "h": 470 },
+          "jump": { "x": 1254, "y": 0, "w": 418, "h": 470 },
+          "fall": { "x": 0, "y": 470, "w": 418, "h": 471 },
+          "hit": { "x": 418, "y": 470, "w": 418, "h": 471 },
+          "ability": { "x": 836, "y": 470, "w": 418, "h": 471 },
+          "victory": { "x": 1254, "y": 470, "w": 418, "h": 471 }
+        }
+      },
+      "exports": {
+        "generatedBy": "scripts/export-kaizen-batch1.py",
+        "frameSize": 512,
+        "portraitSize": 768,
+        "iconSize": 256,
+        "frames": {
+          "idle": "base/frames/idle.png",
+          "run_01": "base/frames/run_01.png",
+          "run_02": "base/frames/run_02.png",
+          "jump": "base/frames/jump.png",
+          "fall": "base/frames/fall.png",
+          "hit": "base/frames/hit.png",
+          "ability": "base/frames/ability.png",
+          "victory": "base/frames/victory.png"
+        },
+        "portrait": "base/portrait.png",
+        "smallIcon": "base/small_icon.png"
+      }
+    }
+  },
+  "futureBatches": [
+    {
+      "id": "batch_2_archetypes",
+      "characters": ["trickster", "duelist", "baron", "oracle", "machine", "unwritten"],
+      "sameAssetSetAs": "base_kaizen"
+    },
+    {
+      "id": "batch_3_world",
+      "assets": ["neon_ward_rooftop", "origins_alley", "crucible_red_storm", "floor_tiles", "rupture_portal", "rain_overlay", "neon_signs"]
+    },
+    {
+      "id": "batch_4_obstacles_bosses",
+      "assets": ["bear_shadow", "red_candle_slash", "gas_debris", "ghost_token", "save_lantern", "failed_transaction_glitch", "cursed_trade_boss_card"]
+    },
+    {
+      "id": "batch_5_ui",
+      "assets": ["health_bar", "style_meter", "archetype_badge", "score_card", "run_complete_card", "mint_button", "share_button", "forge_loading_screen", "kaizen_stamp"]
+    }
+  ]
+}

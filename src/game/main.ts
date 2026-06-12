@@ -7,7 +7,7 @@ import { extractMoments } from "../engine/moments.js";
 import { assign, computeStats, type Assignment } from "../engine/archetype.js";
 import { generateLevel, type LevelSpec, type Segment, type TrapEvent } from "../engine/levelgen.js";
 import type { Timeline } from "../indexer/types.js";
-import { buildWorld, buildFighter, BIOME_COLORS, type WorldHandles } from "./world.js";
+import { buildWorld, buildFighter, BIOME_COLORS, updateFighterPose, setFighterFrame, type WorldHandles } from "./world.js";
 
 // ---------- DOM ----------
 const $ = (id: string) => document.getElementById(id)!;
@@ -15,8 +15,15 @@ const ui = {
   gate: $("gate"), addr: $("addr") as HTMLInputElement, forgeBtn: $("forge-btn"),
   gateStatus: $("gate-status"), hud: $("hud"), deaths: $("deaths"), coins: $("coins"),
   era: $("era-toast"), caption: $("caption"), endcard: $("endcard"), endStats: $("end-stats"),
-  endTitle: $("end-title"), endEvidence: $("end-evidence"), shareBtn: $("share-btn"),
+  endTitle: $("end-title"), endPortrait: $("end-portrait") as HTMLImageElement, endEvidence: $("end-evidence"), shareBtn: $("share-btn"),
   againBtn: $("again-btn"), canvasWrap: $("canvas-wrap"),
+};
+
+const CHARACTER_ASSETS: Partial<Record<string, { portrait: string; icon: string }>> = {
+  wanderer: {
+    portrait: "assets/kaizen/base/portrait.png",
+    icon: "assets/kaizen/base/small_icon.png",
+  },
 };
 
 // ---------- three.js ----------
@@ -116,7 +123,7 @@ function startRun(level: LevelSpec, assignment: Assignment) {
   scene.background = new THREE.Color(BIOME_COLORS.origins.sky);
 
   const world = buildWorld(scene, level);
-  const fighter = buildFighter(assignment.archetype.palette);
+  const fighter = buildFighter(assignment.archetype.palette, assignment.archetype.id);
   scene.add(fighter);
 
   run = {
@@ -213,9 +220,18 @@ const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)]!;
 function endRun() {
   if (!run || run.ended) return;
   run.ended = true;
+  setFighterFrame(run.fighter, "victory");
   const secs = ((performance.now() - run.startedAt) / 1000).toFixed(1);
   const a = run.assignment;
   const stats = computeStats(a.traits);
+  const assets = CHARACTER_ASSETS[a.archetype.id];
+  if (assets) {
+    ui.endPortrait.src = assets.portrait;
+    ui.endPortrait.classList.remove("hidden");
+  } else {
+    ui.endPortrait.removeAttribute("src");
+    ui.endPortrait.classList.add("hidden");
+  }
   ui.endTitle.textContent = `${a.archetype.name} · RELIC FORGED`;
   ui.endStats.innerHTML =
     `<div><b>${run.deaths}</b><span>deaths in your own history</span></div>` +
@@ -392,11 +408,7 @@ function tick(now: number) {
     // --- fighter pose ---
     walk += dt * 11;
     r.fighter.position.set(r.x, r.y, 0);
-    const { legL, legR, armL, armR } = r.fighter.userData as Record<string, THREE.Mesh>;
-    const sw = r.grounded ? Math.sin(walk) * 0.55 : 0.2;
-    legL!.rotation.x = sw; legR!.rotation.x = -sw;
-    armL!.rotation.x = -sw * 0.7; armR!.rotation.x = sw * 0.7;
-    r.fighter.rotation.y = 0.18;
+    updateFighterPose(r.fighter, walk, r.grounded, r.vy);
 
     // --- portal shimmer ---
     r.world.portal.rotation.y = Math.sin(now / 700) * 0.08;

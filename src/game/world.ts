@@ -163,8 +163,53 @@ export function buildWorld(scene: THREE.Scene, level: LevelSpec): WorldHandles {
   };
 }
 
-/** Procedural voxel chibi fighter from an archetype palette — no art assets needed. */
-export function buildFighter(palette: { body: string; trim: string; glow: string }): THREE.Group {
+type FighterFrame = "idle" | "run_01" | "run_02" | "jump" | "fall" | "hit" | "ability" | "victory";
+
+const BASE_KAIZEN_SHEET = "assets/kaizen/base/base-kaizen-spritesheet.png";
+const SPRITE_FRAMES: Record<FighterFrame, { col: number; row: number }> = {
+  idle: { col: 0, row: 0 },
+  run_01: { col: 1, row: 0 },
+  run_02: { col: 2, row: 0 },
+  jump: { col: 3, row: 0 },
+  fall: { col: 0, row: 1 },
+  hit: { col: 1, row: 1 },
+  ability: { col: 2, row: 1 },
+  victory: { col: 3, row: 1 },
+};
+
+/** Build the playable fighter. Wanderer uses the new Base Kaizen sprite sheet; the rest keep the procedural fallback. */
+export function buildFighter(palette: { body: string; trim: string; glow: string }, archetypeId?: string): THREE.Group {
+  if (archetypeId === "wanderer") return buildSpriteFighter();
+  return buildVoxelFighter(palette);
+}
+
+function buildSpriteFighter(): THREE.Group {
+  const g = new THREE.Group();
+  const texture = new THREE.TextureLoader().load(BASE_KAIZEN_SHEET);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(0.25, 0.5);
+  texture.offset.set(0, 0.5);
+  texture.magFilter = THREE.LinearFilter;
+
+  const mat = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.04,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const sprite = new THREE.Mesh(new THREE.PlaneGeometry(2.75, 2.75), mat);
+  sprite.position.set(0.25, 1.28, 0.06);
+  g.add(sprite);
+  g.userData = { mode: "sprite", texture, currentFrame: "idle" satisfies FighterFrame };
+  setFighterFrame(g, "idle");
+  return g;
+}
+
+/** Procedural voxel chibi fighter from an archetype palette — fallback for archetypes without art assets. */
+function buildVoxelFighter(palette: { body: string; trim: string; glow: string }): THREE.Group {
   const g = new THREE.Group();
   const body = new THREE.MeshLambertMaterial({ color: palette.body });
   const trim = new THREE.MeshLambertMaterial({ color: palette.trim });
@@ -190,4 +235,31 @@ export function buildFighter(palette: { body: string; trim: string; glow: string
 
   g.userData = { legL, legR, armL, armR };
   return g;
+}
+
+export function setFighterFrame(fighter: THREE.Group, frame: FighterFrame): void {
+  const data = fighter.userData as { mode?: string; texture?: THREE.Texture; currentFrame?: FighterFrame };
+  if (data.mode !== "sprite" || !data.texture || data.currentFrame === frame) return;
+  const f = SPRITE_FRAMES[frame];
+  data.texture.offset.set(f.col * 0.25, f.row === 0 ? 0.5 : 0);
+  data.currentFrame = frame;
+}
+
+export function updateFighterPose(fighter: THREE.Group, walk: number, grounded: boolean, vy: number): void {
+  const data = fighter.userData as Record<string, THREE.Mesh> & { mode?: string };
+  if (data.mode === "sprite") {
+    if (!grounded) {
+      setFighterFrame(fighter, vy > 0 ? "jump" : "fall");
+    } else {
+      setFighterFrame(fighter, Math.sin(walk) >= 0 ? "run_01" : "run_02");
+    }
+    return;
+  }
+
+  const sw = grounded ? Math.sin(walk) * 0.55 : 0.2;
+  data.legL!.rotation.x = sw;
+  data.legR!.rotation.x = -sw;
+  data.armL!.rotation.x = -sw * 0.7;
+  data.armR!.rotation.x = sw * 0.7;
+  fighter.rotation.y = 0.18;
 }
