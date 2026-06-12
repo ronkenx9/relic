@@ -219,3 +219,78 @@ describe("level generator", () => {
     expect(level.totalLength).toBeGreaterThan(50);
   });
 });
+
+describe("character sheet & notes writer", () => {
+  const mockTimeline = () => {
+    return timeline([
+      ev({ timestamp: T0 }, 0),
+      ev({ kind: "token_transfer", direction: "in", timestamp: T0 + 10 * DAY, token: { address: "0xcda472997ddbf2cf1a95e0c5d6e2467d130a08e0", symbol: "USDY", decimals: 18 } }, 1),
+      ev({ isContractCall: true, functionName: "swap", counterparty: "0x200811222472b53dbd9822a1062638a16ff42078", timestamp: T0 + 20 * DAY }, 2),
+      ev({ timestamp: T0 + 400 * DAY }, 3), // age ~400 days
+    ], "0xdeadbeef");
+  };
+
+  it("builds a correct character sheet data structure", async () => {
+    const tl = mockTimeline();
+    const { buildCharacterSheet } = await import("../src/sheet/engine.js");
+    const sheet = buildCharacterSheet(tl, "This is a test notes sentence.");
+    
+    expect(sheet.address).toBe("0xdeadbeef");
+    expect(sheet.ageYears).toBe(1.1); // 400 / 365
+    expect(sheet.heightTxs).toBe(3); // 3 tx events (0, 2, 3)
+    expect(sheet.affiliation).toBe("Merchant Moe");
+    expect(sheet.role).toBe("THE ORACLE");
+    expect(sheet.stats.conviction).toBeGreaterThan(0);
+    expect(sheet.personality).toBe("This is a test notes sentence.");
+    expect(sheet.moments.length).toBeGreaterThan(0);
+  });
+
+  it("validates notes and flags banned words or fake numbers", async () => {
+    const tl = mockTimeline();
+    const { validateNotes } = await import("../src/notes/writer.js");
+    const moments = extractMoments(tl);
+    const a = assign(tl, moments);
+    const stats = computeStats(a.traits);
+
+    // Valid note using correct stats and numbers
+    const validText = `A fighter who has survived ${a.traits.ageDays} days. With aggression score of ${stats.aggression}, they have 2 transactions on the ledger.`;
+    const check1 = validateNotes(validText, a.traits, moments, stats);
+    expect(check1.valid).toBe(true);
+    expect(check1.mismatches.length).toBe(0);
+
+    // Mismatched numbers
+    const invalidText1 = `This fighter has 99999 transactions and an aggression score of 9876.`;
+    const check2 = validateNotes(invalidText1, a.traits, moments, stats);
+    expect(check2.valid).toBe(false);
+    expect(check2.mismatches).toContain("99999");
+    expect(check2.mismatches).toContain("9876");
+
+    // Banned words
+    const invalidText2 = `This is a revolutionary game-changing space journey to the moon!`;
+    const check3 = validateNotes(invalidText2, a.traits, moments, stats);
+    expect(check3.valid).toBe(false);
+    expect(check3.bannedHits).toContain("journey");
+    expect(check3.bannedHits).toContain("space");
+    expect(check3.bannedHits).toContain("game-changing");
+    expect(check3.bannedHits).toContain("to the moon");
+  });
+
+  it("provides distinct fallback notes per archetype", async () => {
+    const { generateFallbackNotes } = await import("../src/notes/writer.js");
+    
+    // empty wallet -> unwritten
+    const tlEmpty = timeline([]);
+    const aEmpty = assign(tlEmpty, []);
+    const notesEmpty = generateFallbackNotes("unwritten", aEmpty.traits, []);
+    expect(notesEmpty).toContain("pages of their chronicle are blank");
+
+    // wanderer
+    const tlWanderer = mockTimeline();
+    const moments = extractMoments(tlWanderer);
+    const aWanderer = assign(tlWanderer, moments);
+    const notesWanderer = generateFallbackNotes("wanderer", aWanderer.traits, moments);
+    expect(notesWanderer).toContain("this Wanderer has survived");
+    expect(notesWanderer).toContain("days on-chain");
+  });
+});
+

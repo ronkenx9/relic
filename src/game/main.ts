@@ -2,13 +2,14 @@
  * Third-person wallet-history lane runner generated from real on-chain receipts. */
 import * as THREE from "three";
 import { fetchTimeline } from "../engine/explorer.js";
-import { extractMoments } from "../engine/moments.js";
+import { extractMoments, type Moment } from "../engine/moments.js";
 import { assign, computeStats, type Assignment } from "../engine/archetype.js";
 import { generateLevel, type LevelSpec } from "../engine/levelgen.js";
 import type { Timeline } from "../indexer/types.js";
 import { BIOME_COLORS } from "./world.js";
 import { Runner3D } from "./runner3d.js";
 import { createCinematics } from "./cinematics.js";
+import { generateFallbackNotes } from "../notes/writer.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 const ui = {
@@ -21,6 +22,7 @@ const ui = {
   endTitle: $("end-title"), endRank: $("end-rank"), endPortrait: $("end-portrait") as HTMLImageElement,
   endEvidence: $("end-evidence"), shareBtn: $("share-btn"), mintBtn: $("mint-btn") as HTMLAnchorElement,
   againBtn: $("again-btn"), canvasWrap: $("canvas-wrap"),
+  endPersonality: $("end-personality"),
 };
 
 const CHARACTER_ASSETS: Partial<Record<string, { portrait: string; icon: string }>> = {
@@ -70,6 +72,7 @@ interface RunState {
   assignment: Assignment;
   runner: Runner3D;
   ended: boolean;
+  moments: Moment[];
 }
 
 let run: RunState | null = null;
@@ -133,7 +136,7 @@ async function forge(address: string) {
   const assignment = assign(tl, moments);
   ui.gateStatus.textContent = `${assignment.archetype.name} — ${assignment.archetype.tagline}`;
   await sleep(900);
-  startRun(generateLevel(tl, moments), assignment);
+  startRun(generateLevel(tl, moments), assignment, moments);
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -141,7 +144,7 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function startRun(level: LevelSpec, assignment: Assignment) {
+function startRun(level: LevelSpec, assignment: Assignment, moments: Moment[]) {
   if (run) run.runner.dispose(scene);
   scene.fog = new THREE.Fog(BIOME_COLORS.origins.fog, 18, 105);
   scene.background = new THREE.Color("#8DB7D7");
@@ -155,7 +158,7 @@ function startRun(level: LevelSpec, assignment: Assignment) {
     onCoin: () => cine.coinPulse(ui.coins),
   });
 
-  run = { level, assignment, runner, ended: false };
+  run = { level, assignment, runner, ended: false, moments };
   setHudIdentity(assignment);
   ui.gate.classList.add("hidden");
   setForgeLoading(false);
@@ -226,6 +229,8 @@ function endRun() {
   const styleGrade = state.deaths === 0 ? "S-RANK CLEAN RUN" : state.deaths <= 2 ? "A-RANK SURVIVOR" : state.deaths <= 5 ? "B-RANK CHAIN SCARRED" : "C-RANK STILL FORGED";
   ui.endTitle.textContent = `${a.archetype.name} · RELIC FORGED`;
   ui.endRank.textContent = `${styleGrade} · ${state.coins} BLOCKS`;
+  const notes = generateFallbackNotes(a.archetype.id, a.traits, run.moments);
+  ui.endPersonality.textContent = notes;
   ui.endStats.innerHTML =
     `<div><b>${state.deaths}</b><span>hits in your own history</span></div>` +
     `<div><b>${secs}s</b><span>run time</span></div>` +
