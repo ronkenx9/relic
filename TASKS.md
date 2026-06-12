@@ -23,7 +23,7 @@
       GATE: `npm run dev -- index <wallet>` warm <30s, sane timeline JSON.
 - [x] Moment extractor — 10 types (price-gated cursed_trade/got_away replaced by honest price-free full_exit/faceplant per R2) — pure functions, every moment carries evidence txHashes.
       GATE: fixture tests for all 8 moment types + determinism test.
-- [ ] Calibration pull: 10 wallets → data/calibration/.
+- [x] Calibration pull: 10 wallets → data/calibration/.
       GATE: each yields ≥2 moments or triggers THE UNWRITTEN path.
 
 ## Phase 2 — Archetype engine (the fusion core)
@@ -34,13 +34,13 @@
       GATE: no archetype without ≥1 evidence line (tested).
 
 ## Phase 3 — Character sheet + writing
-- [ ] Sheet data model: AGE/HEIGHT(txs)/AFFILIATION/ROLE/STATS(5 bars)/palette per PRD §5.
-- [ ] Notes writer: LLM 40–70 words, every claim cites an extracted moment; number-validator
+- [x] Sheet data model: AGE/HEIGHT(txs)/AFFILIATION/ROLE/STATS(5 bars)/palette per PRD §5.
+- [x] Notes writer: LLM 40–70 words, every claim cites an extracted moment; number-validator
       ported from provenance; banned words; deterministic template fallback when no API key.
       GATE: validator catches a planted hallucinated date/amount (tested).
-- [ ] THE UNWRITTEN onboarding path for empty wallets.
+- [x] THE UNWRITTEN onboarding path for empty wallets.
       GATE: fresh address → onboarding sheet, not an error.
-- [ ] Calibration read: 10 sheets must read DIFFERENT. ⚠️ OWNER spot-check queued (subjective
+- [x] Calibration read: 10 sheets must read DIFFERENT. ⚠️ OWNER spot-check queued (subjective
       gate — agent does a first pass, owner confirms before submission).
 
 ## Phase 4 — Contract (deployment award)
@@ -62,8 +62,8 @@
       GATE: public URL loads on a phone.
 
 ## Phase 6 — Submission hardening (protected)
-- [ ] ship-verification.md pass; README (quickstart, addresses, live URL, honest limits).
-- [ ] SUBMISSION.md: video script + X thread draft + BUIDL fields.
+- [x] ship-verification.md pass; README (quickstart, addresses, live URL, honest limits).
+- [x] SUBMISSION.md: video script + X thread draft + BUIDL fields.
 - [ ] OWNER: product name ("RELIC" / "KAIZENVERSE FORGE" / "KAIZENVERSE: RELIC").
 - [ ] OWNER: Kaizenverse PNGs (6 portraits, emblem, palette chips, silhouette).
 - [ ] OWNER: demo video, X post #MantleAIHackathon, DoraHacks BUIDL.
