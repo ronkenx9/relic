@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RELIC × KAIZENVERSE — THE RUN</title>
+<meta name="description" content="Your wallet is a troll level. The chain already trolled you — survive it this time. Deterministic voxel run generated from your real on-chain history, on Mantle.">
+<link rel="icon" type="image/png" href="assets/kaizen/base/small_icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#0C0E11; --panel:#14171d; --line:#2a2f37; --bone:#EDE9E0; --muted:#9aa0a8; --amber:#E3A52F; --red:#C25C45; --cyan:#60D7FF; --pink:#FF5CA8; --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:var(--ink); color:var(--bone); font-family:var(--sans); overflow:hidden; }
+  #canvas-wrap { position:fixed; inset:0; }
+  #canvas-wrap canvas { width:100%; height:100%; display:block; }
+  .hidden { display:none !important; }
+
+  /* gate */
+  #gate { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          gap:1.1rem; background:radial-gradient(ellipse at 50% 40%, #14171d 0%, #0C0E11 70%); z-index:10; padding:1.5rem; text-align:center; }
+  .forge-loader { width:9.5rem; height:9.5rem; position:absolute; top:10%; left:50%; transform:translateX(-50%); opacity:0; pointer-events:none; transition:opacity .25s; }
+  .forge-loader::before, .forge-loader::after { content:""; position:absolute; inset:0; border:1px solid #E3A52F66; border-radius:50%; animation:forge-spin 2.4s linear infinite; }
+  .forge-loader::after { inset:1.15rem; border-color:#FF5CA866; animation-duration:1.55s; animation-direction:reverse; }
+  .forge-loader i { position:absolute; inset:3.15rem; border-radius:50%; background:radial-gradient(circle, #EDE9E0 0%, #E3A52F 48%, #C25C4500 70%); filter:blur(.2px); animation:forge-pulse .9s ease-in-out infinite alternate; }
+  #gate.forging .forge-loader { opacity:1; }
+  #gate.forging #gate-icon { animation:forge-bob 1s ease-in-out infinite alternate; }
+  #gate-icon { width:72px; height:72px; object-fit:contain; filter:drop-shadow(0 10px 24px #0008); }
+  #gate .brand { font-family:var(--mono); font-size:.66rem; letter-spacing:.34em; color:var(--amber); }
+  #gate h1 { font-family:var(--mono); font-weight:800; font-size:clamp(1.6rem,5.5vw,3.1rem); line-height:1.12; letter-spacing:-.01em; }
+  #gate h1 em { font-style:normal; color:var(--amber); }
+  #gate p.sub { max-width:34rem; color:#9aa0a8; font-size:.95rem; }
+  .addr-row { display:flex; gap:.5rem; width:min(34rem,92vw); }
+  #addr { flex:1; background:var(--panel); border:1px solid var(--line); color:var(--bone); font-family:var(--mono);
+          font-size:.85rem; padding:.85rem 1rem; border-radius:8px; outline:none; }
+  #addr:focus { border-color:var(--amber); }
+  #forge-btn { background:var(--amber); color:#161002; border:0; font-family:var(--mono); font-weight:800;
+               font-size:.8rem; letter-spacing:.08em; padding:.85rem 1.3rem; border-radius:8px; cursor:pointer; }
+  #forge-btn:active { transform:translateY(1px); }
+  .demos { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; }
+  .demos button { background:transparent; border:1px solid var(--line); color:var(--muted); font-family:var(--mono);
+                  font-size:.66rem; letter-spacing:.06em; padding:.5rem .8rem; border-radius:99px; cursor:pointer; }
+  .demos button:hover { border-color:var(--amber); color:var(--amber); }
+  #gate-status { font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; color:var(--amber); min-height:1.2em; }
+  #gate .foot { position:absolute; bottom:1.2rem; font-family:var(--mono); font-size:.6rem; letter-spacing:.14em; color:#5c636c; }
+  #gate .foot a { color:var(--muted); }
+  @keyframes forge-spin { to { transform:rotate(360deg); } }
+  @keyframes forge-pulse { to { transform:scale(1.14); opacity:.62; } }
+  @keyframes forge-bob { to { transform:translateY(-5px); } }
+
+  /* hud */
+  #hud { position:fixed; inset:0; pointer-events:none; z-index:5; font-family:var(--mono); }
+  .hud-top { position:absolute; top:1rem; left:1rem; right:1rem; display:grid; grid-template-columns:minmax(12rem,19rem) minmax(14rem,24rem) minmax(10rem,15rem); gap:.75rem; align-items:start; }
+  .hud-panel { background:#0C0E11cc; border:1px solid #2a2f37cc; border-radius:8px; box-shadow:0 12px 36px #0005; backdrop-filter:blur(6px); }
+  #archetype-badge { display:grid; grid-template-columns:3rem 1fr; gap:.65rem; align-items:center; padding:.55rem .65rem; min-height:4.3rem; }
+  #badge-icon { width:3rem; height:3rem; object-fit:contain; background:#080a0e; border:1px solid #2a2f37; border-radius:8px; }
+  #badge-name { font-weight:800; font-size:.72rem; letter-spacing:.12em; color:var(--amber); line-height:1.2; }
+  #badge-tag { margin-top:.2rem; color:var(--muted); font-family:var(--sans); font-size:.66rem; line-height:1.2; }
+  #meters { padding:.6rem .7rem; display:flex; flex-direction:column; gap:.55rem; }
+  .meter { display:grid; grid-template-columns:4.5rem 1fr 3.2rem; gap:.55rem; align-items:center; }
+  .meter label, .meter span { font-size:.62rem; letter-spacing:.14em; color:var(--muted); }
+  .meter span { text-align:right; color:var(--bone); }
+  .meter-track { height:.55rem; background:#2a2f37; border-radius:999px; overflow:hidden; }
+  .meter-fill { display:block; height:100%; width:0%; border-radius:999px; transition:width .18s ease; }
+  #health-fill { background:linear-gradient(90deg, var(--red), #E3A52F); }
+  #style-fill { background:linear-gradient(90deg, var(--cyan), var(--pink)); }
+  #score-card { padding:.55rem .65rem; display:grid; grid-template-columns:1fr 1fr; gap:.45rem; }
+  .score-item { min-width:0; }
+  .score-item b { display:block; font-size:.96rem; color:var(--bone); line-height:1; }
+  .score-item span { display:block; margin-top:.2rem; color:var(--muted); font-size:.55rem; letter-spacing:.12em; }
+  #score-era { grid-column:1/-1; color:var(--amber); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #deaths, #coins { display:none; }
+  #era-toast { position:absolute; top:14%; left:50%; transform:translateX(-50%); font-weight:800;
+               font-size:clamp(1rem,3.4vw,1.7rem); letter-spacing:.42em; opacity:0; transition:opacity .5s; }
+  #era-toast.show { opacity:.92; }
+  #caption { position:absolute; bottom:12%; left:50%; transform:translateX(-50%); width:min(40rem,90vw); text-align:center;
+             font-size:.8rem; letter-spacing:.04em; color:var(--bone); background:#0009; padding:.6rem 1rem; border-radius:8px;
+             opacity:0; transition:opacity .35s; }
+  #caption.show { opacity:1; }
+  #hint { position:absolute; bottom:4%; left:50%; transform:translateX(-50%); font-size:.62rem; letter-spacing:.2em; color:#5c636c; }
+
+  /* end card */
+  #endcard { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:9; background:#0C0E11d9; }
+  .card { width:min(33rem,92vw); background:linear-gradient(180deg,#171a20,#101216); border:1px solid #2a2f37; border-radius:8px; padding:1.4rem;
+          display:flex; flex-direction:column; gap:1rem; max-height:88vh; overflow:auto; position:relative; box-shadow:0 24px 80px #0009; }
+  .kaizen-stamp { position:absolute; top:.9rem; right:.9rem; width:5.1rem; height:5.1rem; border:2px solid #C25C45; border-radius:50%;
+                  color:#C25C45; display:grid; place-items:center; text-align:center; font-family:var(--mono); font-weight:800;
+                  font-size:.56rem; letter-spacing:.16em; transform:rotate(12deg); opacity:.82; mix-blend-mode:screen; }
+  .kaizen-stamp::before { content:""; position:absolute; inset:.32rem; border:1px solid #C25C45; border-radius:50%; }
+  .end-head { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:1rem; }
+  #end-portrait { width:6rem; height:6rem; object-fit:contain; background:#0C0E11; border:1px solid #2a2f37; border-radius:8px; }
+  #end-title { font-family:var(--mono); font-weight:800; font-size:1.05rem; letter-spacing:.12em; color:var(--amber); }
+  #end-rank { margin-top:.35rem; font-family:var(--mono); font-weight:800; font-size:.72rem; letter-spacing:.18em; color:var(--cyan); }
+  #end-stats { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+  #end-stats > div { background:#0C0E11; border-radius:8px; padding:.7rem .8rem; }
+  #end-stats b { font-family:var(--mono); font-size:1.3rem; display:block; }
+  #end-stats span { font-size:.68rem; color:#9aa0a8; }
+  #end-stats .bars { grid-column:1/-1; display:flex; flex-direction:column; gap:.35rem; }
+  .bar { display:grid; grid-template-columns:6.4rem 1fr 2rem; align-items:center; gap:.6rem; }
+  .bar i { font-style:normal; font-family:var(--mono); font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:#9aa0a8; }
+  .bar u { text-decoration:none; background:#2a2f37; height:6px; border-radius:3px; overflow:hidden; display:block; }
+  .bar s { text-decoration:none; display:block; height:100%; background:var(--amber); }
+  .bar em { font-style:normal; font-family:var(--mono); font-size:.66rem; text-align:right; }
+  #end-evidence { list-style:none; display:flex; flex-direction:column; gap:.3rem; }
+  #end-evidence li { font-size:.74rem; color:var(--muted); padding-left:1rem; position:relative; }
+  #end-evidence li::before { content:"▸"; position:absolute; left:0; color:var(--amber); }
+  .card .row { display:flex; gap:.6rem; }
+  #share-btn, #mint-btn { flex:1; background:var(--amber); color:#161002; border:0; font-family:var(--mono); font-weight:800;
+               font-size:.72rem; letter-spacing:.08em; padding:.8rem; border-radius:8px; cursor:pointer; text-decoration:none; text-align:center; }
+  #mint-btn { background:transparent; color:var(--cyan); border:1px solid #60D7FF88; }
+  #again-btn { background:transparent; border:1px solid #2a2f37; color:var(--bone); font-family:var(--mono);
+               font-size:.74rem; padding:.8rem 1rem; border-radius:8px; cursor:pointer; }
+  .mint-note { font-size:.62rem; font-family:var(--mono); letter-spacing:.08em; color:#5c636c; text-align:center; }
+  @media (max-width:760px) {
+    .addr-row { flex-direction:column; }
+    .hud-top { grid-template-columns:1fr; right:auto; width:min(22rem,calc(100vw - 2rem)); gap:.5rem; }
+    #meters { order:3; }
+    #score-card { grid-template-columns:1fr 1fr 1.25fr; }
+    #score-era { grid-column:auto; }
+    #era-toast { top:27%; font-size:1rem; letter-spacing:.34em; }
+    #caption { bottom:15%; }
+    .card .row { flex-direction:column; }
+    .kaizen-stamp { width:4.1rem; height:4.1rem; font-size:.48rem; }
+  }
+</style>
+</head>
+<body>
+<div id="canvas-wrap"></div>
+
+<div id="gate">
+  <div class="forge-loader" aria-hidden="true"><i></i></div>
+  <img id="gate-icon" src="assets/kaizen/base/small_icon.png" alt="Base Kaizen icon">
+  <span class="brand">RELIC × KAIZENVERSE</span>
+  <h1>YOUR WALLET IS<br>A <em>TROLL LEVEL</em>.</h1>
+  <p class="sub">The chain already trolled you — the cursed trade, the gas, the quiet year. We turned your real
+  history into a voxel run. Same wallet, same traps, every time. Survive it this time.</p>
+  <div class="addr-row">
+    <input id="addr" placeholder="0x… paste any wallet" spellcheck="false" autocomplete="off">
+    <button id="forge-btn">FORGE</button>
+  </div>
+  <div class="demos">
+    <button data-demo="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">vitalik</button>
+    <button data-demo="0x0168459886bd2aa322c18ed0b209887095afcacb">an og (8.7y)</button>
+    <button data-demo="0x561a8431b23fe6a524ce874a029cdaadc9642bf4">a degen</button>
+  </div>
+  <div id="gate-status"></div>
+  <div class="foot">DETERMINISTIC · EVIDENCE-BACKED · ON <a href="https://www.mantle.xyz" target="_blank" rel="noopener">MANTLE</a> · #MantleAIHackathon</div>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div id="archetype-badge" class="hud-panel">
+      <img id="badge-icon" src="assets/kaizen/base/small_icon.png" alt="Archetype icon">
+      <div>
+        <div id="badge-name">THE WANDERER</div>
+        <div id="badge-tag">Old roads. Long holds. Still here.</div>
+      </div>
+    </div>
+    <div id="meters" class="hud-panel">
+      <div class="meter">
+        <label>HEALTH</label>
+        <div class="meter-track"><i id="health-fill" class="meter-fill"></i></div>
+        <span id="health-text">100%</span>
+      </div>
+      <div class="meter">
+        <label>STYLE</label>
+        <div class="meter-track"><i id="style-fill" class="meter-fill"></i></div>
+        <span id="style-text">0%</span>
+      </div>
+    </div>
+    <div id="score-card" class="hud-panel">
+      <div class="score-item"><b id="score-deaths">0</b><span>DEATHS</span></div>
+      <div class="score-item"><b id="score-blocks">0</b><span>BLOCKS</span></div>
+      <div class="score-item" id="score-era"><b>GENESIS</b><span>ERA</span></div>
+    </div>
+  </div>
+  <div id="deaths">DEATHS 0</div>
+  <div id="coins">BLOCKS 0</div>
+  <div id="era-toast"></div>
+  <div id="caption"></div>
+  <div id="hint">A / D — LANES · SPACE — JUMP</div>
+</div>
+
+<div id="endcard" class="hidden">
+  <div class="card">
+    <div id="kaizen-stamp" class="kaizen-stamp">KAIZEN<br>FORGED</div>
+    <div class="end-head">
+      <img id="end-portrait" class="hidden" alt="Forged fighter portrait">
+      <div>
+        <div id="end-title"></div>
+        <div id="end-rank"></div>
+      </div>
+    </div>
+    <div id="end-stats"></div>
+    <ul id="end-evidence"></ul>
+    <div class="row">
+      <button id="share-btn">COPY SHARE TEXT</button>
+      <a id="mint-btn" href="https://explorer.sepolia.mantle.xyz/address/0x903cfd9F9F315301A80ad6A1D85da0F2E081b1a4" target="_blank" rel="noopener">VIEW MINT</a>
+      <button id="again-btn">RUN AGAIN</button>
+    </div>
+    <div class="mint-note">RELIC.SOL LIVE ON MANTLE SEPOLIA — <a href="https://explorer.sepolia.mantle.xyz/address/0x903cfd9F9F315301A80ad6A1D85da0F2E081b1a4" target="_blank" rel="noopener" style="color:#9aa0a8">0x903c…b1a4</a> · TOKEN #1 FORGED · SELF-SERVE MINT NEXT</div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="game.js"></script>
+</body>
+</html>
