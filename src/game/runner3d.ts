@@ -6,37 +6,6 @@ import { buildCursedTradeBossCard, buildGasTollGate, buildGhostToken } from "./o
 import { buildBlobShadow } from "./scenery.js";
 import { buildEraRoadTexture, wallColorAt } from "./cinematics.js";
 
-const SPRITE_SHEETS: Partial<Record<string, string>> = {
-  wanderer: "assets/kaizen/base/base-kaizen-spritesheet.png",
-  trickster: "assets/kaizen/trickster/trickster-spritesheet.png",
-  duelist: "assets/kaizen/duelist/duelist-spritesheet.png",
-  baron: "assets/kaizen/baron/baron-spritesheet.png",
-  oracle: "assets/kaizen/oracle/oracle-spritesheet.png",
-  machine: "assets/kaizen/machine/machine-spritesheet.png",
-  unwritten: "assets/kaizen/unwritten/unwritten-spritesheet.png",
-};
-
-type FighterFrame = "idle" | "run_01" | "run_02" | "jump" | "fall" | "hit" | "ability" | "victory";
-
-const SPRITE_FRAMES: Record<FighterFrame, { col: number; row: number }> = {
-  idle: { col: 0, row: 0 },
-  run_01: { col: 1, row: 0 },
-  run_02: { col: 2, row: 0 },
-  jump: { col: 3, row: 0 },
-  fall: { col: 0, row: 1 },
-  hit: { col: 1, row: 1 },
-  ability: { col: 2, row: 1 },
-  victory: { col: 3, row: 1 },
-};
-
-function setRunnerFighterFrame(player: THREE.Group, frame: FighterFrame): void {
-  const data = player.userData as { mode?: string; texture?: THREE.Texture; currentFrame?: FighterFrame };
-  if (data.mode !== "sprite" || !data.texture || data.currentFrame === frame) return;
-  const f = SPRITE_FRAMES[frame];
-  data.texture.offset.set(f.col * 0.25, f.row === 0 ? 0.5 : 0);
-  data.currentFrame = frame;
-}
-
 type Lane = -1 | 0 | 1;
 type ObstacleKind = "block" | "spike" | "gate" | "glitch" | "bear";
 
@@ -125,73 +94,204 @@ function makeGridTexture(base: string, line: string, size = 256): THREE.CanvasTe
   return tex;
 }
 
-function buildRunnerAvatar(assignment: Assignment): THREE.Group {
-  const archetypeId = assignment.archetype.id;
-  const sheetPath = SPRITE_SHEETS[archetypeId];
-  if (sheetPath) {
-    const g = new THREE.Group();
-    const texture = new THREE.TextureLoader().load(sheetPath);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(0.25, 0.5);
-    texture.offset.set(0, 0.5);
-    texture.magFilter = THREE.LinearFilter;
+interface AvatarPalette {
+  jacket: string;
+  sleeve: string;
+  shirt: string;
+  pants: string;
+  skin: string;
+  hair: string;
+  accent: string;
+  glow: string;
+  metal: string;
+}
 
-    const mat = new THREE.MeshLambertMaterial({
-      map: texture,
-      transparent: true,
-      alphaTest: 0.04,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      emissive: "#FFFFFF",
-      emissiveMap: texture,
-      emissiveIntensity: 0.18, // faint self-light: readable in the dark winter, still dims
-    });
-    const sprite = new THREE.Mesh(new THREE.PlaneGeometry(2.75, 2.75), mat);
-    sprite.position.set(0, 1.375, 0);
-    g.add(sprite);
-    g.userData = { mode: "sprite", texture, currentFrame: "idle" satisfies FighterFrame };
-    setRunnerFighterFrame(g, "idle");
-    return g;
+interface AvatarParts {
+  torso: THREE.Object3D;
+  head: THREE.Object3D;
+  shoulderL: THREE.Group;
+  shoulderR: THREE.Group;
+  elbowL: THREE.Group;
+  elbowR: THREE.Group;
+  hipL: THREE.Group;
+  hipR: THREE.Group;
+  kneeL: THREE.Group;
+  kneeR: THREE.Group;
+  footL: THREE.Object3D;
+  footR: THREE.Object3D;
+  bag: THREE.Object3D;
+  katana: THREE.Object3D;
+  pendant: THREE.Object3D;
+}
+
+const AVATAR_PALETTES: Record<string, AvatarPalette> = {
+  wanderer: { jacket: "#E07090", sleeve: "#BFC2C7", shirt: "#171719", pants: "#17191E", skin: "#C98C62", hair: "#191514", accent: "#D73338", glow: "#FF5CA8", metal: "#D8D4CB" },
+  trickster: { jacket: "#B34CFF", sleeve: "#27213D", shirt: "#11111B", pants: "#1B1728", skin: "#C98C62", hair: "#17131D", accent: "#F010F0", glow: "#F010F0", metal: "#E6D8FF" },
+  duelist: { jacket: "#8A1D1D", sleeve: "#2A1618", shirt: "#161012", pants: "#151417", skin: "#C4895E", hair: "#120E0E", accent: "#FF3A57", glow: "#FF3A57", metal: "#FFD2A1" },
+  baron: { jacket: "#7A5A18", sleeve: "#E1C069", shirt: "#15130F", pants: "#181713", skin: "#C6905F", hair: "#16120D", accent: "#E3A52F", glow: "#E3A52F", metal: "#F2D787" },
+  oracle: { jacket: "#245C84", sleeve: "#D8ECFF", shirt: "#101720", pants: "#151A22", skin: "#C59066", hair: "#111822", accent: "#60D7FF", glow: "#60D7FF", metal: "#E6F2FF" },
+  machine: { jacket: "#4A5058", sleeve: "#C8CDD2", shirt: "#151619", pants: "#181A1E", skin: "#B8A18B", hair: "#111214", accent: "#FF3B30", glow: "#FF3B30", metal: "#E8EBEE" },
+  unwritten: { jacket: "#3C3D42", sleeve: "#BFBFC4", shirt: "#101113", pants: "#17181B", skin: "#B89978", hair: "#101113", accent: "#FFFFFF", glow: "#FFFFFF", metal: "#D0D0D4" },
+};
+
+function roundedMat(color: string, roughness = 0.42, metalness = 0.06): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+}
+
+function makeCapsule(radius: number, length: number, mat: THREE.Material): THREE.Mesh {
+  return new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 8, 14), mat);
+}
+
+function buildRunnerAvatar(assignment: Assignment): THREE.Group {
+  const g = new THREE.Group();
+  const p = AVATAR_PALETTES[assignment.archetype.id] ?? AVATAR_PALETTES.wanderer;
+  const jacket = roundedMat(p.jacket, 0.38, 0.12);
+  const sleeve = roundedMat(p.sleeve, 0.36, 0.08);
+  const shirt = roundedMat(p.shirt, 0.5, 0.04);
+  const pants = roundedMat(p.pants, 0.48, 0.05);
+  const skin = roundedMat(p.skin, 0.5, 0.02);
+  const hair = roundedMat(p.hair, 0.55, 0.02);
+  const shoe = roundedMat("#0F1012", 0.45, 0.08);
+  const metal = roundedMat(p.metal, 0.24, 0.46);
+  const glow = new THREE.MeshStandardMaterial({ color: p.glow, emissive: p.glow, emissiveIntensity: 1.45, roughness: 0.22 });
+
+  const pelvis = new THREE.Group();
+  pelvis.position.set(0, 0.88, 0);
+  g.add(pelvis);
+
+  const hips = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.32, 0.44), pants);
+  hips.position.set(0, 0, 0);
+  pelvis.add(hips);
+
+  const torsoPivot = new THREE.Group();
+  torsoPivot.position.set(0, 0.36, 0);
+  pelvis.add(torsoPivot);
+
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 0.62, 8, 16), jacket);
+  torso.name = "torso";
+  torso.scale.set(1.02, 1, 0.74);
+  torso.position.set(0, 0.46, 0);
+  torsoPivot.add(torso);
+
+  const shirtPanel = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.62, 0.05), shirt);
+  shirtPanel.position.set(0, 0.42, 0.26);
+  torsoPivot.add(shirtPanel);
+
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.035, 8, 18), sleeve);
+  collar.position.set(0, 0.88, 0.05);
+  collar.rotation.x = Math.PI / 2;
+  torsoPivot.add(collar);
+
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.18, 12), skin);
+  neck.position.set(0, 0.93, 0.01);
+  torsoPivot.add(neck);
+
+  const head = new THREE.Group();
+  head.name = "head";
+  head.position.set(0, 1.16, 0.02);
+  torsoPivot.add(head);
+  const face = new THREE.Mesh(new THREE.SphereGeometry(0.29, 20, 16), skin);
+  face.scale.set(0.9, 1.04, 0.86);
+  head.add(face);
+  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.302, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), hair);
+  hairCap.scale.set(0.96, 0.74, 0.9);
+  hairCap.position.set(0, 0.1, 0);
+  head.add(hairCap);
+  for (const dx of [-0.085, 0.085]) {
+    const eye = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.055, 0.018), glow);
+    eye.position.set(dx, 0.025, 0.245);
+    head.add(eye);
   }
 
-  // Fallback to voxel avatar
-  const g = new THREE.Group();
-  const p = assignment.archetype.palette;
-  const body = new THREE.MeshStandardMaterial({ color: p.body, roughness: 0.42, metalness: 0.18 });
-  const trim = new THREE.MeshStandardMaterial({ color: p.trim, roughness: 0.36, metalness: 0.2 });
-  const glow = new THREE.MeshStandardMaterial({ color: p.glow, emissive: p.glow, emissiveIntensity: 1.3, roughness: 0.2 });
-  const dark = new THREE.MeshStandardMaterial({ color: "#101216", roughness: 0.48, metalness: 0.2 });
-
-  const addBox = (name: string, sx: number, sy: number, sz: number, x: number, y: number, z: number, mat: THREE.Material) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
-    mesh.name = name;
-    mesh.position.set(x, y, z);
-    g.add(mesh);
-    return mesh;
+  const makeArm = (side: -1 | 1) => {
+    const shoulder = new THREE.Group();
+    shoulder.position.set(side * 0.42, 0.78, 0.02);
+    torsoPivot.add(shoulder);
+    const upper = makeCapsule(0.075, 0.38, sleeve);
+    upper.position.y = -0.21;
+    shoulder.add(upper);
+    const elbow = new THREE.Group();
+    elbow.position.y = -0.44;
+    shoulder.add(elbow);
+    const lower = makeCapsule(0.068, 0.34, skin);
+    lower.position.y = -0.19;
+    elbow.add(lower);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 8), skin);
+    hand.position.y = -0.39;
+    elbow.add(hand);
+    return { shoulder, elbow };
   };
 
-  addBox("torso", 0.72, 1.05, 0.42, 0, 1.34, 0, body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.33, 18, 14), trim);
-  head.name = "head";
-  head.position.set(0, 2.05, 0);
-  g.add(head);
-  addBox("bag", 0.18, 0.72, 0.18, -0.5, 1.36, 0.05, dark);
-  addBox("katana", 0.08, 1.25, 0.08, 0.42, 1.66, -0.18, glow).rotation.z = -0.55;
-  addBox("armL", 0.18, 0.82, 0.18, -0.55, 1.32, 0.03, trim);
-  addBox("armR", 0.18, 0.82, 0.18, 0.55, 1.32, 0.03, trim);
-  addBox("legL", 0.22, 0.86, 0.22, -0.24, 0.56, 0.02, dark);
-  addBox("legR", 0.22, 0.86, 0.22, 0.24, 0.56, 0.02, dark);
-  addBox("eyeL", 0.08, 0.08, 0.04, -0.1, 2.08, 0.3, glow);
-  addBox("eyeR", 0.08, 0.08, 0.04, 0.1, 2.08, 0.3, glow);
+  const makeLeg = (side: -1 | 1) => {
+    const hip = new THREE.Group();
+    hip.position.set(side * 0.22, -0.05, 0);
+    pelvis.add(hip);
+    const upper = makeCapsule(0.105, 0.45, pants);
+    upper.position.y = -0.25;
+    hip.add(upper);
+    const knee = new THREE.Group();
+    knee.position.y = -0.52;
+    hip.add(knee);
+    const lower = makeCapsule(0.09, 0.42, pants);
+    lower.position.y = -0.24;
+    knee.add(lower);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.42), shoe);
+    foot.position.set(0, -0.49, 0.1);
+    knee.add(foot);
+    return { hip, knee, foot };
+  };
+
+  const armL = makeArm(-1);
+  const armR = makeArm(1);
+  const legL = makeLeg(-1);
+  const legR = makeLeg(1);
+
+  const bag = new THREE.Group();
+  bag.name = "bag";
+  bag.position.set(-0.45, 0.48, 0.16);
+  torsoPivot.add(bag);
+  const bagBody = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.44, 0.14), roundedMat("#17120E", 0.5, 0.05));
+  bag.add(bagBody);
+  const strap = new THREE.Mesh(new THREE.BoxGeometry(0.055, 1.16, 0.035), roundedMat("#23170F", 0.48, 0.04));
+  strap.position.set(0.33, 0.18, 0.25);
+  strap.rotation.z = -0.52;
+  torsoPivot.add(strap);
+
+  const katana = new THREE.Group();
+  katana.name = "katana";
+  katana.position.set(0.43, 0.7, -0.23);
+  katana.rotation.set(0.2, 0.16, -0.62);
+  torsoPivot.add(katana);
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.045, 1.25, 0.035), metal);
+  blade.position.y = 0.18;
+  const hilt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.25, 0.08), glow);
+  hilt.position.y = -0.48;
+  katana.add(blade, hilt);
+
+  const pendant = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.035), new THREE.MeshStandardMaterial({ color: p.accent, emissive: p.accent, emissiveIntensity: 0.7, roughness: 0.3 }));
+  pendant.name = "pendant";
+  pendant.position.set(0.05, 0.2, 0.31);
+  torsoPivot.add(pendant);
 
   g.userData.parts = {
-    armL: g.getObjectByName("armL"),
-    armR: g.getObjectByName("armR"),
-    legL: g.getObjectByName("legL"),
-    legR: g.getObjectByName("legR"),
-  };
+    torso: torsoPivot,
+    head,
+    shoulderL: armL.shoulder,
+    shoulderR: armR.shoulder,
+    elbowL: armL.elbow,
+    elbowR: armR.elbow,
+    hipL: legL.hip,
+    hipR: legR.hip,
+    kneeL: legL.knee,
+    kneeR: legR.knee,
+    footL: legL.foot,
+    footR: legR.foot,
+    bag,
+    katana,
+    pendant,
+  } satisfies AvatarParts;
+  g.userData.mode = "rig3d";
+  g.scale.setScalar(1.18);
   return g;
 }
 
@@ -254,6 +354,7 @@ export class Runner3D {
   magnet = 0;
   shield = 0;
   private jumpBuffer = 0;
+  private landingSquash = 0;
 
   constructor(scene: THREE.Scene, level: LevelSpec, assignment: Assignment, callbacks: Runner3DCallbacks) {
     this.level = level;
@@ -335,7 +436,11 @@ export class Runner3D {
     this.vy += GRAV * dtRaw;
     this.y += this.vy * dtRaw;
     if (this.y <= 0) {
-      if (!this.grounded) this.callbacks.onLand?.(Math.min(1, Math.abs(this.vy) / 14));
+      if (!this.grounded) {
+        const impact = Math.min(1, Math.abs(this.vy) / 14);
+        this.landingSquash = Math.max(this.landingSquash, impact);
+        this.callbacks.onLand?.(impact);
+      }
       this.y = 0;
       this.vy = 0;
       this.grounded = true;
@@ -346,17 +451,9 @@ export class Runner3D {
     if (Math.abs(this.player.position.x - targetX) < 0.05) this.lane = this.laneTarget;
     this.player.position.y = this.y;
     this.player.position.z = zOf(this.x);
-    if (this.player.userData.mode === "sprite") {
-      this.player.rotation.y = (targetX - this.player.position.x) * -0.12;
-      const spriteMesh = this.player.children[0];
-      if (spriteMesh) {
-        spriteMesh.quaternion.copy(camera.quaternion);
-        const tilt = (targetX - this.player.position.x) * -0.05;
-        spriteMesh.rotateZ(tilt);
-      }
-    } else {
-      this.player.rotation.y = Math.sin(now / 160) * 0.04 + (targetX - this.player.position.x) * -0.12;
-    }
+    const laneDelta = targetX - this.player.position.x;
+    this.player.rotation.y = Math.PI + Math.sin(now / 160) * 0.035 + laneDelta * -0.08;
+    this.player.rotation.z = laneDelta * -0.065;
     this.animatePlayer(now);
 
     // Update shadow position and scale
@@ -371,9 +468,9 @@ export class Runner3D {
     this.updateObstacles(now);
     this.updateAbilities(dtRaw);
 
-    const cam = new THREE.Vector3(this.player.position.x * 0.55, 4.2 + this.y * 0.18, zOf(this.x) + 8.4);
+    const cam = new THREE.Vector3(this.player.position.x * 0.58, 3.55 + this.y * 0.2, zOf(this.x) + 6.9);
     camera.position.lerp(cam, Math.min(1, dtRaw * 6));
-    camera.lookAt(this.player.position.x * 0.28, 1.7 + this.y * 0.1, zOf(this.x) - 9);
+    camera.lookAt(this.player.position.x * 0.28, 1.45 + this.y * 0.12, zOf(this.x) - 8.4);
     camera.fov += ((inSpeed ? 78 : 70) - camera.fov) * Math.min(1, dtRaw * 3.5);
     camera.updateProjectionMatrix();
 
@@ -588,28 +685,64 @@ export class Runner3D {
   }
 
   private animatePlayer(now: number): void {
-    const data = this.player.userData as { mode?: string };
-    if (data.mode === "sprite") {
-      if (this.ended) {
-        setRunnerFighterFrame(this.player, "victory");
-      } else if (this.shield > 1.4) {
-        setRunnerFighterFrame(this.player, "hit");
-      } else if (!this.grounded) {
-        setRunnerFighterFrame(this.player, this.vy > 0 ? "jump" : "fall");
-      } else {
-        const walk = now / 95;
-        setRunnerFighterFrame(this.player, Math.sin(walk) >= 0 ? "run_01" : "run_02");
+    const parts = this.player.userData.parts as Partial<AvatarParts>;
+    const t = now / 95;
+    const wave = Math.sin(t);
+    const counter = Math.cos(t);
+    const laneLean = this.player.rotation.z;
+    const squash = this.landingSquash;
+    this.landingSquash = Math.max(0, this.landingSquash - 0.08);
+
+    this.player.scale.set(1 + squash * 0.08, 1 - squash * 0.14, 1 + squash * 0.08);
+
+    if (this.grounded) {
+      const stride = wave;
+      if (parts.hipL) parts.hipL.rotation.x = stride * 0.72;
+      if (parts.hipR) parts.hipR.rotation.x = -stride * 0.72;
+      if (parts.kneeL) parts.kneeL.rotation.x = Math.max(0.1, -stride) * 0.98 + 0.08;
+      if (parts.kneeR) parts.kneeR.rotation.x = Math.max(0.1, stride) * 0.98 + 0.08;
+      if (parts.shoulderL) parts.shoulderL.rotation.x = -stride * 0.72;
+      if (parts.shoulderR) parts.shoulderR.rotation.x = stride * 0.72;
+      if (parts.elbowL) parts.elbowL.rotation.x = 0.25 + Math.max(0, stride) * 0.45;
+      if (parts.elbowR) parts.elbowR.rotation.x = 0.25 + Math.max(0, -stride) * 0.45;
+      if (parts.torso) {
+        parts.torso.rotation.x = 0.08 + Math.abs(counter) * 0.025;
+        parts.torso.rotation.z = laneLean * 0.5;
       }
-      return;
+    } else {
+      const rising = this.vy > 0;
+      if (parts.hipL) parts.hipL.rotation.x = rising ? -0.25 : 0.28;
+      if (parts.hipR) parts.hipR.rotation.x = rising ? -0.08 : 0.18;
+      if (parts.kneeL) parts.kneeL.rotation.x = rising ? 1.15 : 0.45;
+      if (parts.kneeR) parts.kneeR.rotation.x = rising ? 0.85 : 0.35;
+      if (parts.shoulderL) parts.shoulderL.rotation.x = rising ? -0.85 : -0.25;
+      if (parts.shoulderR) parts.shoulderR.rotation.x = rising ? -0.65 : -0.15;
+      if (parts.elbowL) parts.elbowL.rotation.x = 0.55;
+      if (parts.elbowR) parts.elbowR.rotation.x = 0.5;
+      if (parts.torso) {
+        parts.torso.rotation.x = rising ? -0.14 : 0.2;
+        parts.torso.rotation.z = laneLean * 0.6;
+      }
     }
 
-    const parts = this.player.userData.parts as Record<string, THREE.Object3D | undefined>;
-    const t = now / 95;
-    const stride = this.grounded ? Math.sin(t) : 0.25;
-    if (parts.armL) parts.armL.rotation.x = -stride * 0.7;
-    if (parts.armR) parts.armR.rotation.x = stride * 0.7;
-    if (parts.legL) parts.legL.rotation.x = stride * 0.9;
-    if (parts.legR) parts.legR.rotation.x = -stride * 0.9;
+    if (parts.head) {
+      parts.head.rotation.x = this.grounded ? Math.abs(counter) * 0.035 : this.vy > 0 ? -0.1 : 0.08;
+      parts.head.rotation.z = -laneLean * 0.55;
+    }
+    if (parts.bag) {
+      parts.bag.rotation.x = Math.sin(t + 0.8) * 0.18 - this.vy * 0.006;
+      parts.bag.rotation.z = -laneLean * 0.8;
+    }
+    if (parts.katana) {
+      parts.katana.rotation.x = 0.2 + Math.sin(t + 1.4) * 0.06 - this.vy * 0.004;
+      parts.katana.rotation.z = -0.62 - laneLean * 0.8;
+    }
+    if (parts.pendant) {
+      parts.pendant.rotation.x = Math.sin(t * 1.6) * 0.2 - this.vy * 0.01;
+      parts.pendant.rotation.z = laneLean * -1.1;
+    }
+    if (parts.footL) parts.footL.rotation.x = this.grounded ? -Math.max(0, wave) * 0.42 : 0.26;
+    if (parts.footR) parts.footR.rotation.x = this.grounded ? -Math.max(0, -wave) * 0.42 : 0.22;
   }
 
   private segmentAt(x: number): Segment | undefined {
