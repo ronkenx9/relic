@@ -1,0 +1,14 @@
+{
+  "note": "Procedural low-poly/blockout 3D starter models generated from Kaizenverse archetype sheets. These are game/prototype-ready GLB bases, not final sculpted/rigged production models.",
+  "format": "GLB",
+  "characters": [
+    "01_kaisei_wanderer",
+    "02_kaede_striker",
+    "03_senka_assassin",
+    "04_hayami_cutting_wind",
+    "05_cinder_vice",
+    "06_redline_visor"
+  ],
+  "scale": "approx 2.8 units tall",
+  "next_step": "Import into Blender/Unity/Godot, separate meshes by name, refine topology, rig, animate, and bake textures."
+}
